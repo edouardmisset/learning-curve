@@ -162,9 +162,9 @@
 }
 
 :where([type='submit'], [type='reset'], form button:not([type])):is(
-    :hover,
-    :focus-visible
-  ):not([disabled]) {
+  :hover,
+  :focus-visible
+):not([disabled]) {
   --_border: currentcolor;
 }
 

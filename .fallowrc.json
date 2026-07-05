@@ -7,5 +7,12 @@
     "src/route-data.ts",
     "src/utils/discovery.ts"
   ],
-  "ignoreDependencies": ["@fontsource-variable/atkinson-hyperlegible-next"]
+  "duplicates": {
+    "enabled": true,
+    "minOccurrences": 3
+  },
+  "ignoreDependencies": [
+    "@fontsource-variable/atkinson-hyperlegible-next",
+    "canvaskit-wasm"
+  ]
 }

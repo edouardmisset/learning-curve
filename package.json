@@ -36,7 +36,6 @@
     "canvaskit-wasm": "^0.41.1",
     "expressive-code-fullscreen": "^1.1.0",
     "mermaid": "^11.16.0",
-    "sharp": "^0.35.2",
     "starlight-blog": "^0.27.0",
     "starlight-kbd": "^0.4.0",
     "starlight-links-validator": "^0.25.1",
@@ -46,8 +45,8 @@
   "devDependencies": {
     "@typescript/native-preview": "7.0.0-dev.20260628.1",
     "cspell": "^10.0.1",
-    "fallow": "^2.104.0",
-    "markdownlint-cli2": "^0.22.0",
+    "fallow": "^3.1.0",
+    "markdownlint-cli2": "^0.23.0",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-order": "^8.1.1",
