@@ -1,0 +1,56 @@
+---
+title: Knip
+date: 2026-03-26
+description: Use Knip to find unused files, exports, and dependencies, then tune your config to avoid false positives.
+tags: ['Knip', 'Dependencies', 'Code Quality', 'TypeScript']
+---
+
+import { Code } from '@astrojs/starlight/components'
+import { Aside } from '@astrojs/starlight/components'
+import Source from './knip.config.ts?raw'
+
+## What is Knip?
+
+Knip analyzes your project and reports unused dependencies, exports, and files.
+It is especially useful in long-lived projects where old code paths and packages can accumulate over time.
+
+## Configuration
+
+Add ignore paths to your `knip.config.ts` to prevent Knip from reporting false positives. This is useful to ignore paths that Knip cannot safely infer from static analysis:
+
+<Code code={Source} lang="typescript" title="knip.config.ts" wrap />
+
+## Usage
+
+Wire it in `package.json`:
+
+```json title="package.json"
+{
+  "scripts": {
+    "knip": "knip"
+  }
+}
+```
+
+Run it with:
+
+```bash
+pnpm knip
+```
+
+## Practical Workflow
+
+1. Run `pnpm knip`.
+2. Review findings and remove truly unused items.
+3. If a reported item is used by framework conventions, add a focused ignore.
+4. Re-run Knip until the output is clean and meaningful.
+
+<Aside type="tip">
+  Keep the ignore list short. Broad ignores reduce noise quickly, but can hide
+  real cleanup opportunities.
+</Aside>
+
+## References
+
+- [Knip Documentation](https://knip.dev)
+- [Knip Configuration](https://knip.dev/reference/configuration)
