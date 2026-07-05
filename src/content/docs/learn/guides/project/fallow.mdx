@@ -1,0 +1,77 @@
+---
+title: Fallow
+date: 2026-03-26
+description: Find dead code, duplication, and complexity hot spots with Fallow, then tune focused ignores for framework conventions.
+tags: ['Fallow', 'Dependencies', 'Code Quality', 'TypeScript']
+---
+
+import { Aside, Code } from '@astrojs/starlight/components'
+import Source from './fallow.config.json?raw'
+
+## What is Fallow?
+
+Fallow is a codebase analysis tool for TypeScript and JavaScript. A single run
+checks for dead code, duplicated logic, and maintainability problems such as
+complexity hot spots.
+
+It complements a linter: a linter examines individual files for suspicious
+syntax and style, while Fallow follows relationships across the project to find
+unused files, exports, types, and dependencies.
+
+## Installation
+
+Install Fallow as a development dependency so everyone on the project uses the
+same version:
+
+```bash
+pnpm add --save-dev fallow
+```
+
+Wire the local binary into `package.json`:
+
+```json title="package.json"
+{
+  "scripts": {
+    "fallow": "fallow"
+  }
+}
+```
+
+Run the complete analysis with:
+
+```bash
+pnpm fallow
+```
+
+The bare command runs all three analysis groups. During focused work, you can
+run `pnpm fallow dead-code`, `pnpm fallow dupes`, or `pnpm fallow health`.
+
+## Configuration
+
+Fallow works without configuration. When a framework or build tool loads a file
+by convention, however, static analysis may not see the connection. Create a
+`.fallowrc.json` and add only those paths to `ignorePatterns`:
+
+<Code code={Source} lang="json" title=".fallowrc.json" wrap />
+
+The `$schema` entry enables validation and editor completion.
+
+## Practical workflow
+
+1. Run `pnpm fallow`.
+2. Review each finding before deleting code or dependencies.
+3. Fix genuine findings in small, testable changes.
+4. Add a focused ignore only when usage depends on a convention Fallow cannot
+   discover.
+5. Re-run the analysis until its output is useful and understood.
+
+For automatic cleanup, preview changes first with
+`pnpm fallow fix --dry-run`. Commit or stash unrelated work before applying a
+fix without `--dry-run`.
+
+## References
+
+- [Fallow installation](https://docs.fallow.tools/installation)
+- [Fallow quick start](https://docs.fallow.tools/quickstart)
+- [Migrating from Knip](https://docs.fallow.tools/migration/from-knip)
+- [Fallow configuration](https://docs.fallow.tools/configuration)

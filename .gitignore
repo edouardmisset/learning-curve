@@ -22,4 +22,5 @@ pnpm-debug.log*
 
 # Cache files
 .cache/
+.fallow/
 .stylelintcache

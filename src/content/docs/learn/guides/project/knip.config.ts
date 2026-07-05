@@ -1,6 +1,4 @@
-import type { KnipConfig } from 'knip'
-
-const config: KnipConfig = {
+const config = {
   ignore: ['some-config.config.ts', 'some-script.ts'],
 }
 
