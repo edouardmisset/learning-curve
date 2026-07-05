@@ -8,8 +8,6 @@ tags: ['Fallow', 'Dependencies', 'Code Quality', 'TypeScript']
 import { Aside, Code } from '@astrojs/starlight/components'
 import Source from './fallow.config.json?raw'
 
-{/* cspell:words fallowrc */}
-
 ## What is Fallow?
 
 Fallow is a codebase analysis tool for TypeScript and JavaScript. A single run
@@ -56,36 +54,7 @@ by convention, however, static analysis may not see the connection. Create a
 
 <Code code={Source} lang="json" title=".fallowrc.json" wrap />
 
-The `$schema` entry enables validation and editor completion. The example also
-shows two convention-driven exceptions from this project: `ec.config.mjs` is an
-entry point loaded by Expressive Code, and the font package is referenced by a
-string path rather than an import Fallow can follow. Patterns are relative to
-the project root. Keep them narrow: ignoring a whole directory can hide genuine
-cleanup opportunities.
-
-<Aside type="caution">
-  Knip and Fallow use different glob engines. Common patterns such as `src/**`
-  work in both, but Fallow does not treat a leading `!` as negation. Verify
-  every migrated pattern with `pnpm fallow dead-code`.
-</Aside>
-
-## Migrating from Knip
-
-Fallow can translate JSON-based Knip configuration:
-
-```bash
-fallow migrate --dry-run
-fallow migrate
-```
-
-The dry run previews the resulting `.fallowrc.json`. In particular, Knip's
-`ignore` setting maps to Fallow's `ignorePatterns`, while `ignoreDependencies`
-keeps the same name. TypeScript Knip configuration is neither detected nor
-parsed automatically, so translate a small `knip.config.ts` by hand or first
-convert it to supported JSON or JSONC before running the migrator.
-
-After reviewing the generated configuration, remove Knip and compare the dead
-code results before relying on the new setup.
+The `$schema` entry enables validation and editor completion.
 
 ## Practical workflow
 

@@ -1,11 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "entry": ["ec.config.mjs"],
-  "ignorePatterns": [
-    "src/content/docs/snippets/**",
-    "vite.config.ts",
-    "src/route-data.ts",
-    "src/utils/discovery.ts"
-  ],
+  "entry": ["main.ts"],
+  "ignorePatterns": ["vite.config.ts"],
   "ignoreDependencies": ["@fontsource-variable/atkinson-hyperlegible-next"]
 }
