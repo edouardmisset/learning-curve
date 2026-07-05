@@ -8,7 +8,7 @@
     "check": "vp run lint:md && vp run lint && vp run format && vp run astro:check && vp run style:lint && vp run spell:check",
     "dev": "astro dev",
     "format": "vp fmt --write",
-    "knip": "knip",
+    "fallow": "fallow",
     "lint:md": "markdownlint-cli2 \"**/*.{md,mdx}\" --fix",
     "lint": "vp lint --fix --no-error-on-unmatched-pattern",
     "prepare": "vp config",
@@ -46,7 +46,7 @@
   "devDependencies": {
     "@typescript/native-preview": "7.0.0-dev.20260628.1",
     "cspell": "^10.0.1",
-    "knip": "^6.23.0",
+    "fallow": "^2.104.0",
     "markdownlint-cli2": "^0.22.0",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
