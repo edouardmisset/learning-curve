@@ -673,64 +673,14 @@ These patterns are concerned with algorithms and the assignment of responsibilit
 
 ### Observer
 
-**The Concept:** Lets you define a subscription mechanism to notify multiple objects about any events that happen to the object they're observing.
+Observer lets a publisher notify a changing set of subscribers without depending
+on their concrete implementations. It fits cases such as UI state listeners and
+Node.js events, where one source can have many independent consumers. The
+trade-off is an indirect control flow with important rules around ordering,
+errors, mutation, and cleanup.
 
-**Real-world use case:** React state management (Redux/Zustand listeners) or Node.js EventEmitters.
-
-**When to use:** When changes to one object require updating others, and you don't know how many objects need to be updated.
-
-| Benefits                                                                                                                                                    | Drawbacks                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Establishes dynamic relationships between objects at runtime                                                                                                | Subscriber notification order is not guaranteed                      |
-| Follows [Open/Closed Principle](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) (add new subscribers without modifying publisher) | Can lead to memory leaks if subscribers aren't properly unsubscribed |
-| Enables loose coupling between publishers and subscribers                                                                                                   |                                                                      |
-
-```typescript
-interface Observer<T> {
-  update(data: T): void
-}
-
-class Newsletter<T> {
-  private subscribers: Observer<T>[] = []
-
-  subscribe(observer: Observer<T>) {
-    this.subscribers.push(observer)
-  }
-
-  notify(data: T) {
-    this.subscribers.forEach(sub => sub.update(data))
-  }
-}
-
-// Usage
-class EmailSubscriber implements Observer<string> {
-  update(data: string) {
-    console.log(`Email subscriber received: ${data}`)
-  }
-}
-
-const newsletter = new Newsletter<string>()
-newsletter.subscribe(new EmailSubscriber())
-newsletter.notify('New article published!')
-```
-
-#### Functional Alternative: Callbacks / Event Emitters
-
-```typescript
-type Listener<T> = (data: T) => void
-const createNewsletter = <T>() => {
-  const listeners: Listener<T>[] = []
-  return {
-    subscribe: (fn: Listener<T>) => listeners.push(fn),
-    notify: (data: T) => listeners.forEach(fn => fn(data)),
-  }
-}
-
-// Usage
-const newsletter = createNewsletter<string>()
-newsletter.subscribe(data => console.log(`Received: ${data}`))
-newsletter.notify('New article!')
-```
+Read [The Observer Pattern: Events Without Tight Coupling](/my-learning-curve/blog/27-observer-pattern)
+for a typed TypeScript implementation and a deeper look at those contracts.
 
 ### Strategy
 

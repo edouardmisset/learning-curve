@@ -1,0 +1,309 @@
+---
+title: 'The Observer Pattern: Events Without Tight Coupling'
+excerpt: 'Build predictable publishers and subscribers while avoiding leaks, hidden ordering, and fragile error handling.'
+tags: ['Design Patterns', 'TypeScript', 'Architecture', 'JavaScript']
+date: 2026-07-05
+lastUpdated: 2026-07-05
+---
+
+import Disclaimer from '~/components/Disclaimer.astro'
+
+## TL;DR
+
+The Observer pattern lets a publisher announce an event without knowing which
+parts of the application will react. Subscribers register callbacks and receive
+future notifications until they unsubscribe. That loose coupling is useful for
+UI state, analytics, caches, and domain events, but it also creates contracts
+around ordering, errors, mutation, and cleanup. A good implementation makes
+those contracts explicit.
+
+## One Change, Many Reactions
+
+Imagine an online shop after an order is paid. The receipt view refreshes,
+analytics records the purchase, inventory updates, and a celebratory animation
+fires. Putting all four calls inside `completePayment` works initially, but the
+payment module now knows every downstream feature. Adding or removing one
+reaction means editing the publisher.
+
+The **Observer pattern** replaces those direct dependencies with a subscription
+mechanism. A **publisher** (also called a subject or observable) owns some event
+and a collection of subscribers. A **subscriber** (or observer) registers its
+interest. When the event occurs, the publisher notifies the current subscribers.
+
+The important phrase is _current subscribers_. Who counts as current? In what
+order are they called? What happens if one throws or unsubscribes during a
+notification? The pattern sketch does not answer those questions; our API must.
+
+{/* <!-- truncate --> */}
+
+## The Anatomy of Observer
+
+The relationship has three operations:
+
+1. `subscribe` adds a listener and returns a way to remove it.
+2. `notify` delivers a value to interested listeners.
+3. `unsubscribe` ends that listener's lifetime.
+
+The publisher depends only on the subscriber contract, not on concrete features.
+That is why Observer is often described as a one-to-many dependency. It follows
+the spirit of the
+[Open/Closed Principle](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp):
+new reactions can be attached without changing the publisher.
+
+Observer does **not** mean asynchronous. A plain JavaScript implementation
+normally invokes listeners synchronously, on the same call stack. Nor does it
+mean events are durable: a listener that subscribes after a notification does
+not travel back in time to receive it.
+
+## A Predictable TypeScript Implementation
+
+Here is a small publisher with explicit behavior:
+
+```typescript
+type Listener<T> = (value: T) => void
+type Unsubscribe = () => void
+
+class Publisher<T> {
+  private readonly listeners = new Set<Listener<T>>()
+
+  subscribe(listener: Listener<T>): Unsubscribe {
+    this.listeners.add(listener)
+
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  notify(value: T): void {
+    const errors: unknown[] = []
+
+    // A snapshot gives this delivery a stable subscriber list.
+    for (const listener of [...this.listeners]) {
+      try {
+        listener(value)
+      } catch (error) {
+        errors.push(error)
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'One or more subscribers failed')
+    }
+  }
+
+  clear(): void {
+    this.listeners.clear()
+  }
+}
+```
+
+The generic `T` makes the event payload part of the contract. Returning an
+unsubscribe function keeps cleanup next to setup, and makes repeated cleanup
+safe because `Set.delete` is idempotent.
+
+```typescript
+type OrderPaid = {
+  orderId: string
+  totalInCents: number
+}
+
+const orderPaid = new Publisher<OrderPaid>()
+
+const stopReceiptUpdates = orderPaid.subscribe(order => {
+  console.log(`Render receipt for ${order.orderId}`)
+})
+
+orderPaid.subscribe(order => {
+  console.log(`Record purchase worth ${order.totalInCents}`)
+})
+
+orderPaid.notify({ orderId: 'ord_123', totalInCents: 4200 })
+stopReceiptUpdates()
+```
+
+This design is deliberately modest. It does not buffer, retry, schedule, or
+transform events. Those features can be valuable, but adding them silently would
+turn a tiny publisher into a surprising event framework.
+
+## The Contracts Hidden Inside `notify`
+
+### Ordering and nested notifications
+
+JavaScript `Set` iteration follows insertion order, so this implementation calls
+listeners in subscription order. That can help reproducibility, but application
+correctness should not depend on "analytics runs before cache invalidation."
+If order is a business requirement, represent the workflow directly instead of
+smuggling it through subscription timing.
+
+Because delivery is synchronous, a listener can call `notify` again before the
+first delivery finishes. That is a **nested notification**. It may be intentional,
+but can also create deep recursion or hard-to-follow interleaving. A system that
+cannot permit nested notifications should guard against it or queue values and
+document the new scheduling behavior.
+
+### Duplicate subscriptions
+
+A `Set` stores the same function reference once. Subscribing one callback twice
+therefore still produces one call. Both subscriptions return cleanup functions
+for that single membership, so calling either one removes the listener; calling
+the other afterward does nothing. Two identical-looking arrow functions are
+different objects and both run:
+
+```typescript
+const listener = (value: string) => console.log(value)
+
+publisher.subscribe(listener)
+publisher.subscribe(listener) // Deduplicated
+publisher.subscribe(value => console.log(value)) // A distinct listener
+```
+
+An array-based publisher may intentionally allow duplicates. Neither policy is
+universally correct; the public contract simply needs to say which one applies.
+
+### Mutation during delivery
+
+The snapshot in `notify` freezes membership for that one delivery. A subscriber
+added midway waits until the next value. A subscriber removed midway still
+receives the current value if it was in the snapshot, but not future values.
+Without a snapshot, collection mutation can make delivery depend on iteration
+details and produce wonderfully unpleasant debugging sessions.
+
+### Subscriber exceptions
+
+If `notify` uses a bare loop, the first thrown exception prevents later
+subscribers from running. The implementation above instead gives every listener
+a chance, then throws one `AggregateError`. That policy suits independent
+reactions while still making failure visible.
+
+Other valid policies include failing fast, logging and continuing, or returning
+an error result. The publisher should not casually swallow failures: losing an
+inventory update while the confetti animation succeeds is not the kind of loose
+coupling anybody requested. Asynchronous listeners need a separate async API
+that awaits promises and defines whether work runs sequentially or concurrently.
+
+## Lifetime Is Part of Correctness
+
+The publisher holds strong references to its listeners. If a long-lived
+publisher retains a callback that closes over a removed component, that component
+and everything reachable from the closure may remain in memory. This is why an
+unsubscribe mechanism is not a convenience; it is part of the pattern.
+
+Tie cleanup to the lifetime of the subscriber:
+
+```typescript
+const controller = new AbortController()
+
+const unsubscribe = orderPaid.subscribe(renderReceipt)
+controller.signal.addEventListener('abort', unsubscribe, { once: true })
+
+// When the screen, request, or feature scope ends:
+controller.abort()
+```
+
+Framework lifecycle hooks are another natural home: return the unsubscribe
+function from a React effect, or call it from a custom element's
+`disconnectedCallback`. `clear` is useful when the publisher itself is disposed,
+but global cleanup is not a substitute for subscriber ownership.
+
+## Testing the Behavior, Not the Shape
+
+Tests should lock down the contracts consumers rely on:
+
+```typescript
+it('uses a stable subscriber snapshot', () => {
+  const publisher = new Publisher<number>()
+  const calls: string[] = []
+
+  let stopSecond = () => {}
+  publisher.subscribe(() => {
+    calls.push('first')
+    stopSecond()
+    publisher.subscribe(() => calls.push('late'))
+  })
+  stopSecond = publisher.subscribe(() => calls.push('second'))
+
+  publisher.notify(1)
+  expect(calls).toEqual(['first', 'second'])
+
+  publisher.notify(2)
+  expect(calls).toEqual(['first', 'second', 'first', 'late'])
+})
+```
+
+Also test subscription order, duplicate callback references, repeated
+cleanup, error aggregation, and payload types. Avoid inspecting the
+private `Set`; tests against observable behavior survive internal refactors.
+
+## Observer in the Web Platform and Node.js
+
+You often do not need to write this class.
+
+- **Callbacks** are best for one consumer or one immediate operation. Passing a
+  function directly is clearer than creating a publisher with one listener.
+- **`EventTarget`** is the web platform's event system. It supports
+  `addEventListener`, `removeEventListener`, `once`, and cancellation through an
+  `AbortSignal`. Use it for DOM-style events and interoperable browser APIs.
+- **Node.js `EventEmitter`** emits named events and calls listeners synchronously
+  in registration order. It includes conventions for `'error'`, one-time
+  listeners, and listener-count warnings. Use it when working with Node APIs and
+  their established semantics.
+- **Observables**, as popularized by RxJS, represent streams with operators for
+  mapping, filtering, combination, scheduling, cancellation, errors, and
+  completion. Use them when events form a data pipeline rather than adding an
+  operator system to a home-grown Publisher.
+
+The class-oriented GoF version gives observers an `update` method. A callback is
+usually lighter in TypeScript because functions already satisfy the role. A
+class remains useful when a subscriber owns substantial state or implements
+several related behaviors. The architecture matters more than whether the
+listener happens to wear a class-shaped hat.
+
+## Practical Uses
+
+Observer works well where one event has genuinely independent consumers:
+
+- a store notifying UI views after state changes;
+- a media query or network-status source updating several components;
+- domain events refreshing a cache, audit view, and metrics counter;
+- analytics hooks observing navigation without owning the router;
+- custom elements dispatching events without knowing their parent application.
+
+These examples share one property: the publisher should not need to know the
+number or identity of consumers. The pattern lets features arrive and depart
+without growing a dependency list in the source.
+
+## When Not to Use It
+
+Avoid Observer when a direct function call communicates the relationship better.
+Hidden event chains make control flow difficult to trace, especially when
+subscriber order matters or one operation must succeed before another begins.
+Use an explicit orchestrator for a business workflow, a returned value for a
+request/response interaction, and a durable queue or message broker when events
+must survive process crashes or cross service boundaries.
+
+Observer also does not provide backpressure. A fast publisher can overwhelm slow
+asynchronous consumers, even if the API makes that mismatch look tidy. Streams,
+queues, or pull-based iteration are better when consumers need to control pace.
+
+## Conclusion
+
+Observer separates the source of an event from its changing set of reactions.
+That is a useful form of loose coupling, not a license to make control flow
+invisible. Define notification order, duplicate handling, mutation, errors, and
+lifetime before consumers discover those rules accidentally.
+
+Start with direct calls. Reach for a small publisher when the relationship is
+truly one-to-many. Prefer the platform's existing event tools when their contract
+fits, and graduate to streams or durable messaging when the problem requires
+more than in-memory notification.
+
+## References
+
+- [Refactoring Guru: Observer](https://refactoring.guru/design-patterns/observer)
+- [MDN: `EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget)
+- [MDN: `EventTarget.addEventListener()`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener)
+- [Node.js documentation: Events](https://nodejs.org/api/events.html)
+- [RxJS documentation: Observable](https://rxjs.dev/guide/observable)
+- [ECMAScript specification: Set Objects](https://tc39.es/ecma262/multipage/keyed-collections.html#set-objects)
+
+<Disclaimer />
