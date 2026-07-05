@@ -1,0 +1,283 @@
+---
+title: JavaScript Iterators and Generators
+excerpt: Learn how JavaScript produces values on demand, from iteration protocols to asynchronous streams.
+tags: ['JavaScript', 'TypeScript', 'Generators', 'Performance']
+date: 2026-07-05
+lastUpdated: 2026-07-05
+---
+
+import { Aside } from '@astrojs/starlight/components'
+import { BaselineStatus } from 'astro-embed'
+import Disclaimer from '~/components/Disclaimer.astro'
+
+## TL;DR
+
+An **iterable** says how iteration starts; an **iterator** says how to get the next value. A generator is convenient syntax for building an iterator whose execution pauses at each `yield`. These tools process finite, infinite, and asynchronous sequences one item at a time instead of constructing an entire array first.
+
+## Introduction
+
+Array methods make data processing pleasantly direct: map everything, filter the result, then keep a few items. That is often ideal. It is less ideal when the input is enormous, never ends, or arrives gradually over a network. An array represents values that already exist; an iterator represents the **procedure for asking for the next value**.
+
+This distinction unlocks generators. The syntax looks unusual—an asterisk here, a `yield` there—but the machinery is a pair of small protocols used by familiar features such as spread syntax and `for...of`.
+
+{/* <!-- truncate --> */}
+
+## The Two Protocols Underneath Iteration
+
+The [iterable protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterable_protocol) answers, “How do I begin iterating this value?” An iterable has a zero-argument method keyed by [`Symbol.iterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/iterator). That method returns an iterator.
+
+```typescript
+const countdown: Iterable<number> = {
+  [Symbol.iterator]() {
+    let current = 3
+
+    return {
+      next(): IteratorResult<number> {
+        if (current === 0) return { done: true, value: undefined }
+        return { done: false, value: current-- }
+      },
+    }
+  },
+}
+
+console.log([...countdown]) // [3, 2, 1]
+```
+
+The [iterator protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterator_protocol) defines the returned object's `next()` method. Each call returns an iterator result: `{ done: false, value }` while values remain, then `{ done: true, value }` at completion. TypeScript models this discriminated shape as `IteratorResult<T, TReturn>`.
+
+An iterable is not necessarily an iterator. The `countdown` object can be traversed repeatedly because every call to `[Symbol.iterator]()` creates fresh state. By contrast, built-in iterators and generator objects are usually **iterable iterators**: their `[Symbol.iterator]()` returns `this`. They carry their position, so consuming them once also consumes that position for every other reference.
+
+```typescript
+const iterator = ['a', 'b', 'c'].values()
+
+console.log(iterator.next()) // { value: 'a', done: false }
+console.log([...iterator]) // ['b', 'c']
+console.log([...iterator]) // []
+```
+
+The [`for...of` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of), array destructuring, spread syntax, and constructors such as `Set` consume iterables. They hide the calls to `next()`, but the same protocol does the work.
+
+## Generators: Iterators Without the Bookkeeping
+
+A [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*) is declared with `function*`. Calling it does not execute its body immediately; it creates a generator object. Calling `next()` starts or resumes the body until a [`yield`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield) expression pauses it and publishes a value.
+
+```typescript
+function* countdownFrom(start: number): Generator<number> {
+  for (let current = start; current > 0; current--) {
+    yield current
+  }
+}
+
+const numbers = countdownFrom(3)
+console.log(numbers.next()) // { value: 3, done: false }
+console.log(numbers.next()) // { value: 2, done: false }
+```
+
+Local variables and the instruction pointer survive each pause. A normal `return` finishes the generator, and its value appears in the final manual `next()` result. `for...of` ignores that final return value because it is not a yielded member of the sequence.
+
+[`yield*`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*) delegates to another iterable. It composes or recursively traverses sources without first collecting their values.
+
+```typescript
+type Branch = number | Branch[]
+
+function* flatten(branch: Branch): Generator<number> {
+  if (typeof branch === 'number') {
+    yield branch
+    return
+  }
+
+  for (const child of branch) yield* flatten(child)
+}
+
+console.log([...flatten([1, [2, [3]]])]) // [1, 2, 3]
+```
+
+<Aside type="note">
+  `yield` pauses JavaScript; it does not make synchronous work run on another
+  thread. Expensive work between yields can still block the main thread.
+</Aside>
+
+## Laziness, Infinity, and Early Termination
+
+Generators are **lazy**: they compute only when a consumer requests another item. That makes an infinite sequence safe to define. It is not safe to consume one without a stopping condition.
+
+```typescript
+function* naturalNumbers(): Generator<number> {
+  let value = 1
+  while (true) yield value++
+}
+
+for (const value of naturalNumbers()) {
+  console.log(value)
+  if (value === 3) break
+}
+```
+
+When `break`, `return`, or an exception ends a `for...of` loop early, JavaScript performs [iterator closing](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#interactions_between_the_language_and_iteration_protocols) by calling the iterator's optional `return()` method. For a generator, that lets a `finally` block run.
+
+```typescript
+function* rows(): Generator<string> {
+  try {
+    yield 'first'
+    yield 'second'
+  } finally {
+    console.log('release the underlying resource')
+  }
+}
+
+for (const row of rows()) {
+  console.log(row)
+  break // the generator's finally block runs
+}
+```
+
+Manual consumers inherit the responsibility: call `return()` if they abandon a generator that owns a resource. An exception inside a generator is thrown from the consuming `next()` call; an exception in the consumer closes a `for...of` iterator before propagating. A generator's `throw()` method can inject an exception at its paused `yield`, but that two-way control flow is usually harder to read than explicit input.
+
+## Practical Use Case 1: Lazy Transformation
+
+Suppose a screen needs the first three active records from a large input. Eager array methods visit and allocate for every intermediate result:
+
+```typescript
+const visible = records
+  .filter(record => record.active)
+  .map(record => record.name.toUpperCase())
+  .slice(0, 3)
+```
+
+Generator adapters do only enough work to produce three outputs:
+
+```typescript
+function* filter<T>(source: Iterable<T>, keep: (value: T) => boolean) {
+  for (const value of source) if (keep(value)) yield value
+}
+
+function* map<T, U>(source: Iterable<T>, transform: (value: T) => U) {
+  for (const value of source) yield transform(value)
+}
+
+function* take<T>(source: Iterable<T>, count: number) {
+  if (count <= 0) return
+  for (const value of source) {
+    yield value
+    if (--count === 0) return
+  }
+}
+
+const visible = [
+  ...take(
+    map(
+      filter(records, record => record.active),
+      record => record.name.toUpperCase(),
+    ),
+    3,
+  ),
+]
+```
+
+Modern runtimes also provide [`Iterator` helper methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator#iterator_helper_methods), including `filter()`, `map()`, and `take()`. They express the same lazy pipeline without custom adapters. Verify your runtime target before adopting them.
+
+<BaselineStatus id="iterator-methods" />
+
+That is the only Baseline widget here. The Web Platform Status catalog has a verified `iterator-methods` feature ID, but no standalone feature IDs for the low-level iterator protocol, generator syntax, or `yield` concepts discussed here. Inventing IDs would render a convincing but meaningless status card, so their compatibility links point to MDN instead.
+
+Laziness is not automatically faster. For a small collection that must be fully consumed, arrays are often clearer and benefit from optimized built-ins. Iterators shine when work is expensive, only a prefix is needed, or intermediate arrays would be costly.
+
+## Asynchronous Iteration
+
+Synchronous iterators return iterator results. The [asynchronous iterator protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols) returns promises for those results and begins through `Symbol.asyncIterator`. An [`async function*`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function*) creates an asynchronous generator, allowing both `await` and `yield` in one stateful function.
+
+Consume an asynchronous iterable with [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of). The loop awaits each `next()` result in sequence. It can also consume a regular synchronous iterable, but that does not make its computation concurrent.
+
+## Practical Use Case 2: Paginated APIs
+
+A paginated endpoint naturally maps to an asynchronous sequence: fetch one page, yield its records, then fetch the next page only if the consumer asks for more.
+
+```typescript
+interface Page<T> {
+  items: T[]
+  nextUrl: string | null
+}
+
+async function* paginate<T>(firstUrl: string): AsyncGenerator<T> {
+  let url: string | null = firstUrl
+
+  while (url !== null) {
+    const response: Response = await fetch(url)
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`)
+
+    const page: Page<T> = await response.json()
+    yield* page.items
+    url = page.nextUrl
+  }
+}
+
+for await (const account of paginate<Account>('/api/accounts')) {
+  await indexAccount(account)
+  if (indexIsFull()) break
+}
+```
+
+This design provides natural backpressure: the next page is not requested until the loop advances. Failures surface at the consuming loop, so wrap it in `try/catch` when recovery is possible. Pass an `AbortSignal` into `fetch` when the caller must cancel an in-flight request; iterator closing cannot cancel a promise that has already started.
+
+## Practical Use Case 3: Streaming Data
+
+The [`ReadableStream` async iteration API](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#async_iteration) lets a response body be processed chunk by chunk. An asynchronous generator can decode bytes and yield complete lines without buffering the whole payload.
+
+```typescript
+async function* lines(
+  stream: ReadableStream<Uint8Array>,
+): AsyncGenerator<string> {
+  const decoder = new TextDecoder()
+  let pending = ''
+
+  for await (const chunk of stream) {
+    pending += decoder.decode(chunk, { stream: true })
+    const parts = pending.split('\n')
+    pending = parts.pop() ?? ''
+    yield* parts
+  }
+
+  pending += decoder.decode()
+  if (pending.length > 0) yield pending
+}
+
+const response = await fetch('/events.ndjson')
+if (!response.body) throw new Error('Response body is unavailable')
+
+for await (const line of lines(response.body)) {
+  handleEvent(JSON.parse(line))
+}
+```
+
+This keeps memory proportional to the buffered partial line rather than the entire response. Production parsers should define policies for empty lines, maximum line length, malformed JSON, cancellation, and decoding errors. Those are application decisions, not details the iteration protocol can choose.
+
+## Trade-Offs and Best Practices
+
+- Prefer a reusable **iterable** that creates fresh iterators when callers may traverse the sequence more than once.
+- Name one-shot iterator APIs clearly. Logging, spreading, or partially looping over one changes what later consumers observe.
+- Keep side effects out of lazy transformations when possible. Nothing happens until consumption, which can make timing surprising.
+- Use `try/finally` around resources owned by a generator, and ensure manual consumers close early.
+- Give every infinite iterator an explicit bound: `take`, a `break`, a timeout, or cancellation.
+- Remember that asynchronous iteration is sequential by default. Use an explicit bounded-concurrency strategy when independent operations should overlap.
+
+Arrays remain best when you need random access, repeated traversal, a known length, or all results at once. Iterators trade those properties for incremental computation and lower intermediate memory. The useful question is not “Can this be a generator?” but “Does producing one value at a time make this program easier or cheaper?”
+
+## Conclusion
+
+JavaScript iteration is a small set of contracts with broad reach. `Symbol.iterator` creates an iterator, `next()` advances it, and generator syntax makes that state machine pleasant to write. Laziness permits bounded work over huge or infinite inputs; asynchronous generators extend the model to values arriving over time. Use them deliberately, document one-shot behavior, and keep ownership of cleanup and errors explicit.
+
+## References
+
+- [Iteration protocols — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols)
+- [`Symbol.iterator` — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/iterator)
+- [`for...of` — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of)
+- [Generator functions — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*)
+- [`yield` — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield)
+- [`yield*` — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*)
+- [Asynchronous generator functions — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function*)
+- [`for await...of` — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of)
+- [Readable stream asynchronous iteration — MDN](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#async_iteration)
+- [Stop turning everything into arrays (and do less work instead) — Matt Smith](https://allthingssmitty.com/2026/01/12/stop-turning-everything-into-arrays-and-do-less-work-instead/)
+- [I think the ergonomics of generators is growing on me — Alex MacArthur](https://macarthur.me/posts/generators)
+
+<Disclaimer />
