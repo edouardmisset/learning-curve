@@ -66,6 +66,13 @@ export const STARLIGHT_OPTIONS = {
         href: `${BASE_PATH}/site.webmanifest`,
       },
     },
+    {
+      tag: 'script',
+      attrs: {
+        src: `${BASE_PATH}/mermaid-fullscreen.js`,
+        defer: true,
+      },
+    },
   ],
   plugins: [
     catppuccin(CATPPUCCIN_OPTIONS),
