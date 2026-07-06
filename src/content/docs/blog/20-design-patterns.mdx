@@ -11,7 +11,7 @@ tags:
     'OOP',
     'Software Design',
   ]
-lastUpdated: 2026-03-24
+lastUpdated: 2026-07-06
 ---
 
 import Disclaimer from '~/components/Disclaimer.astro'
@@ -673,14 +673,21 @@ These patterns are concerned with algorithms and the assignment of responsibilit
 
 ### Observer
 
-Observer lets a publisher notify a changing set of subscribers without depending
-on their concrete implementations. It fits cases such as UI state listeners and
-Node.js events, where one source can have many independent consumers. The
-trade-off is an indirect control flow with important rules around ordering,
-errors, mutation, and cleanup.
+**The Concept:** Lets you define a subscription mechanism to notify multiple objects about any events that happen to the object they're observing.
 
-Read [The Observer Pattern: Events Without Tight Coupling](/my-learning-curve/blog/27-observer-pattern)
-for a typed TypeScript implementation and a deeper look at those contracts.
+**Real-world use case:** React state management (Redux/Zustand listeners) or Node.js EventEmitters.
+
+**When to use:** When changes to one object require updating others, and you don't know how many objects need to be updated.
+
+| Benefits                                                                                                                                                    | Drawbacks                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Establishes dynamic relationships between objects at runtime                                                                                                | Subscriber notification order is not guaranteed                      |
+| Follows [Open/Closed Principle](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) (add new subscribers without modifying publisher) | Can lead to memory leaks if subscribers aren't properly unsubscribed |
+| Enables loose coupling between publishers and subscribers                                                                                                   |                                                                      |
+
+Read [The Observer Pattern: Events Without Tight
+Coupling](/my-learning-curve/blog/27-observer-pattern) for a TypeScript
+implementation and a deeper dive.
 
 ### Strategy
 
