@@ -1,0 +1,186 @@
+---
+title: 'The Observer Pattern: Events Without Tight Coupling'
+excerpt: 'Build predictable publishers and subscribers while avoiding leaks, hidden ordering, and fragile error handling.'
+tags: ['Design Patterns', 'TypeScript', 'Architecture', 'JavaScript']
+date: 2026-07-05
+lastUpdated: 2026-07-06
+---
+
+import Disclaimer from '~/components/Disclaimer.astro'
+
+## TL;DR
+
+The Observer pattern is a fantastic way to let items in your codebase talk to
+each other without being tightly glued together. It allows a **publisher** to
+announce an event, and anyway-interested **subscribers** can sign up to react to
+it. But while it keeps things loose and flexible, it also introduces a few
+subtle gotchas around ordering, errors, and memory leaks. Let's look at how to
+build a basic implementation.
+
+## The "Everything is Connected" Problem
+
+Imagine we're building a checkout flow for an online shop. When a customer pays, we want a few things to happen: we need to update the receipt on screen, log some analytics, update our inventory count, and fire off a celebratory confetti animation.
+
+Our first instinct might be to pack all these calls directly inside our `completePayment` function. It works! But now, our payment code is intimately familiar with every single downstream feature. Want to remove the confetti animation or add an email-sending service? You'll have to modify `completePayment` every time.
+
+This is exactly where the **Observer pattern** comes to the rescue. Instead of hardcoding direct dependencies, we let the payment process publish an "order paid" event, and let other features subscribe to it independently. The publisher doesn't need to know who is listening—it just shares the news!
+
+{/* <!-- truncate --> */}
+
+## Under the Hood of Observer
+
+At its heart, this pattern relies on three simple actions:
+
+1. **Subscribe**: Let a listener sign up for events and get back a way to unsubscribe.
+2. **Notify**: Broadcast the new event to everyone currently on the list.
+3. **Unsubscribe**: Clean up after yourself so you stop receiving updates.
+
+Importantly, this is usually synchronous in JavaScript. When the publisher notifies, it loops through and calls listeners right then and there. It also has no memory: if you subscribe _after_ an event has finished, you won't magically receive past news.
+
+## A TypeScript Implementation
+
+Let’s write a simple, safe `Publisher` in TypeScript. We want our implementation to be highly predictable under real-world conditions:
+
+```typescript
+type Listener<T> = (value: T) => void
+type Unsubscribe = () => void
+
+class Publisher<T> {
+  private readonly listeners = new Set<Listener<T>>()
+
+  subscribe(listener: Listener<T>): Unsubscribe {
+    this.listeners.add(listener)
+    // Return a self-contained cleanup function
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  notify(value: T): void {
+    const errors: unknown[] = []
+
+    // We copy the set so subscription changes mid-delivery don't disrupt our loop
+    const snapshot = [...this.listeners]
+
+    for (const listener of snapshot) {
+      try {
+        listener(value)
+      } catch (error) {
+        errors.push(error) // Don't let one broken listener crash everyone else
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'Some subscribers failed to run')
+    }
+  }
+
+  clear(): void {
+    this.listeners.clear()
+  }
+}
+```
+
+Now, wiring our features together becomes a breeze:
+
+```typescript
+type OrderPaid = {
+  orderId: string
+  totalInCents: number
+}
+
+const orderPaid = new Publisher<OrderPaid>()
+
+// Subscribe our features
+const stopReceiptUpdates = orderPaid.subscribe(order => {
+  console.log(`UI updated for ${order.orderId}`)
+})
+
+orderPaid.subscribe(order => {
+  console.log(`Logged purchase of $${order.totalInCents / 100}`)
+})
+
+// Fire the event!
+orderPaid.notify({ orderId: 'ord_123', totalInCents: 4200 })
+
+// We can clean up individual listeners as needed
+stopReceiptUpdates()
+```
+
+## The Golden Rules of Safe Notifications
+
+When you decouple things with events, some problems become harder to spot. Keep these design rules in mind to keep your codebase sane:
+
+1. **Don't rely on execution order**: Storing listeners in a JavaScript `Set` preserves subscription order. However, your app shouldn't break if analytics happens to run after or before a UI update. If step A _must_ finish before step B starts, model that as an explicit workflow, not as independent observer side-effects.
+2. **Copy the list before iterating**: If a listener unsubscribes while we are inside the `notify` loop, modifying the set we are currently looping over can cause unpredictable issues. Our `[...this.listeners]` snapshot guarantees a stable delivery run.
+3. **Handle errors gracefully**: If the first listener throws an unhandled error, we don't want to stop the other three healthy listeners from running. Collecting errors using a `try/catch` and throwing an `AggregateError` at the end cleanly solves this.
+4. **Be careful with duplicate sign-ups**: Using a `Set` naturally prevents a listener function from subscribing twice. If your app needs duplicate subscriptions for some reason, you'd want an array—but Set behavior is usually safer and much easier to debug.
+
+## Clean Up After Yourself (Avoid Memory Leaks)
+
+The publisher holds strong references to its listeners. If you subscribe a short-lived UI component to a global publisher and forget to unsubscribe, that component can never be garbage-collected. This is the classic "lapsed listener" memory leak.
+
+Fortunately, our `subscribe` method returns an elegant `Unsubscribe` callback. Be sure to link it to your component's lifecycle:
+
+```typescript
+// For generic DOM-style components
+const controller = new AbortController()
+const unsubscribe = orderPaid.subscribe(renderReceipt)
+
+// Triggered when your screen/view is discarded
+controller.signal.addEventListener('abort', unsubscribe, { once: true })
+controller.abort()
+```
+
+If you are in React, call this cleanup function in your `useEffect` cleanups; in Svelte or Vue, hook it up to unmount events.
+
+## Testing Your Publisher
+
+To ensure your event-driven code remains correct through refactors, test its observable behaviors:
+
+```typescript
+it('ensures subscription updates mid-delivery do not disrupt current delivery', () => {
+  const publisher = new Publisher<number>()
+  const executions: string[] = []
+
+  let unsubscribeSecond = () => {}
+  publisher.subscribe(() => {
+    executions.push('first')
+    unsubscribeSecond()
+    publisher.subscribe(() => executions.push('late'))
+  })
+  unsubscribeSecond = publisher.subscribe(() => executions.push('second'))
+
+  publisher.notify(1)
+  expect(executions).toEqual(['first', 'second'])
+
+  publisher.notify(2)
+  expect(executions).toEqual(['first', 'second', 'first', 'late'])
+})
+```
+
+## Other implementations to Consider
+
+Before building your own `Publisher`, check if the platform already has what you need:
+
+- **Simple callbacks**: If you only have one subscriber or one direct caller, passing a standard callback function is much more readable!
+- **`EventTarget`**: If you are in the browser, `EventTarget` (which powers standard events like clicks) is built-in and supports abort signals nicely.
+- **Node's `EventEmitter`**: Node developers can rely on the standard `EventEmitter` class which has highly optimized event loops and robust defaults.
+
+## When to Reach for Observer (and When to Avoid It)
+
+Use Observer when the publisher genuinely doesn't care who is listening, such as logging analytics, refreshing cached UI states, or dispatching lightweight DOM events.
+
+But **avoid it** if you are chaining events together in a complex, invisible web that makes debugging a nightmare. If you need step-by-step business workflows, or require backpressure (slowing down a fast sender to match a slow receiver), an explicit orchestrator or a stream queue is a much better fit.
+
+## Wrapping Up
+
+The Observer pattern is a wonderful arrow in your architectural quiver, letting you build modules that do one thing well without worrying about their downstream neighbors. Just remember to handle error safety, avoid timing dependencies, and always clean up your subscriptions. Your future self will thank you!
+
+## References
+
+- [Refactoring Guru: Observer Pattern](https://refactoring.guru/design-patterns/observer)
+- [MDN Web Docs: `EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget)
+- [Node.js Events Documentation](https://nodejs.org/api/events.html)
+
+<Disclaimer />
