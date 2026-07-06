@@ -17,3 +17,61 @@
     'FiraCode Nerd Font', 'FiraCode Nerd Font Mono', 'Fira Code Nerd Font',
     'FiraCode', 'Fira Code', firacode, consolas, 'Courier New', monospace;
 }
+
+.mermaid {
+  cursor: zoom-in;
+  transition: opacity 0.2s ease-in-out;
+}
+
+@media (hover: hover) {
+  .mermaid:hover {
+    opacity: 0.95;
+  }
+}
+
+.mermaid-fullscreen-overlay {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 999999;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 2rem;
+  inline-size: 100vw;
+  block-size: 100dvh;
+  background-color: hsl(0deg 0% 0% / 85%);
+  cursor: zoom-out;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.mermaid-fullscreen-overlay svg {
+  box-sizing: border-box;
+  border: 1px solid var(--sl-color-hairline, hsl(230deg 24% 19%));
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  inline-size: auto;
+  block-size: auto;
+  background: var(--sl-color-bg, hsl(235deg 19% 13%));
+  box-shadow: 0 10px 30px hsl(0deg 0% 0% / 50%);
+}
+
+.mermaid-fullscreen-overlay .help-text {
+  position: absolute;
+  inset-block-end: 1.5rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  color: var(--sl-color-text-muted, hsl(229deg 35% 75%));
+  font-size: 0.9rem;
+  font-family: inherit;
+  pointer-events: none;
+  background: hsl(0deg 0% 0% / 60%);
+  padding-block: 0.3rem;
+  padding-inline: 0.8rem;
+  border-radius: 12px;
+}
