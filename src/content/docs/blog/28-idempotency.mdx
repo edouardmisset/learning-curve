@@ -3,7 +3,7 @@ title: 'Idempotency: Making Retries Safe'
 excerpt: Learn how idempotency prevents retries from charging, sending, or processing twice.
 tags: ['Idempotency', 'HTTP', 'Distributed Systems', 'APIs', 'TypeScript']
 date: 2026-07-05
-lastUpdated: 2026-07-05
+lastUpdated: 2026-07-16
 ---
 
 import { Aside } from '@astrojs/starlight/components'
@@ -94,8 +94,8 @@ contains both kinds of work.
 | `PATCH /orders/42`  | Not guaranteed        | “Set status” may be repeatable; “increment total” is not.                  |
 
 Two qualifications matter. First, idempotent does not mean **safe**: `DELETE`
-changes state, even though repeating it should not change the intended outcome
-again. Second, it does not promise identical responses. The first `DELETE` may
+changes state (making it unsafe), yet repeating it produces the same intended
+outcome (making it idempotent). Second, it does not promise identical responses. The first `DELETE` may
 return `204`, while a later one returns `404`. Servers may also log every request
 or retain a revision history. The user-requested effect is what stays the same.
 
@@ -126,8 +126,8 @@ async function createPayment() {
 ```
 
 Generate the key **once per user intention**, outside retry loops. A new key on
-every attempt defeats deduplication; reusing one for tomorrow's purchase wrongly
-combines two intentions.
+every attempt defeats deduplication; reusing one for tomorrow's purchase conflates
+two separate business operations, risking the wrong outcome on retry.
 
 On the server, store more than a “seen” boolean. A useful record includes:
 
@@ -170,7 +170,7 @@ if (!(await store.has(key))) {
 }
 ```
 
-Two requests can both pass `has` before either calls `save`, then both charge the
+Two requests can both pass the `has` check before either calls `save` (a time-of-check-to-time-of-use race condition), then both charge the
 card. The check and claim must be one atomic operation. A database unique
 constraint provides a compact concurrency primitive:
 
@@ -322,7 +322,7 @@ async function handlePaymentWebhook(event: PaymentEvent) {
 
 Here the inbox claim, local business update, and outbox message either commit
 together or all roll back. A crash cannot leave a permanent “processed” marker
-without the order update. The duplicate result is handled only after the
+while skipping the order update. The duplicate result is handled only after the
 transaction closes. Verify the webhook signature **before** trusting its event
 ID. Also distinguish a redelivery of one event from two provider events
 describing the same business fact; the latter may require a domain key such as
