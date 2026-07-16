@@ -1,0 +1,382 @@
+---
+title: 'Idempotency: Making Retries Safe'
+excerpt: Learn how idempotency prevents retries from charging, sending, or processing twice.
+tags: ['Idempotency', 'HTTP', 'Distributed Systems', 'APIs', 'TypeScript']
+date: 2026-07-05
+lastUpdated: 2026-07-16
+published: false
+---
+
+import { Aside } from '@astrojs/starlight/components'
+import Disclaimer from '~/components/Disclaimer.astro'
+
+> A request method is considered "idempotent" if the intended effect on the
+> server of multiple identical requests with that method is the same as the
+> effect for a single such request.
+>
+> ~ [RFC 9110, section 9.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2)
+
+## TL;DR
+
+An operation is **idempotent** when repeating it produces the same intended
+effect as doing it once. That property makes retries safe when a client cannot
+tell whether its first request succeeded. HTTP gives some methods idempotent
+semantics, but real systems still need database constraints, idempotency keys,
+request fingerprints, and careful transaction boundaries to prevent duplicated
+side effects.
+
+## The awkward silence after a payment
+
+A customer presses **Pay**. The server charges their card and commits the order,
+but the response disappears when the network connection drops. The browser sees
+only a timeout. Should it retry?
+
+Without another piece of information, the client cannot distinguish two worlds:
+
+1. the request never reached the server, so retrying is necessary;
+2. the request succeeded and only the response was lost, so retrying may charge
+   the customer twice.
+
+Distributed systems live in that uncomfortable gap. Networks delay, duplicate,
+and lose messages; processes crash between steps; queues redeliver work. Rather
+than pretending failures never happen, idempotency lets us make repetition a
+normal and safe recovery mechanism.
+
+{/* <!-- truncate --> */}
+
+## From mathematics to functions
+
+In mathematics, a function `f` is idempotent when applying it twice has the same
+result as applying it once:
+
+```text
+f(f(x)) = f(x)
+```
+
+Taking an absolute value is idempotent: `abs(abs(-5))` and `abs(-5)` both yield
+`5`. Adding one is not: applying it twice changes the result twice.
+
+The same idea appears in programming:
+
+```typescript
+const trim = (value: string) => value.trim()
+const increment = (value: number) => value + 1
+
+trim(trim('  hello  ')) === trim('  hello  ') // true
+increment(increment(1)) === increment(1) // false
+```
+
+This connects naturally to [functional programming](/my-learning-curve/blog/17-programming-paradigms#functional-programming-fp):
+pure functions make effects easier to reason about because their output depends
+only on their input. Composing transformations with
+[higher-order functions](/my-learning-curve/blog/05-higher-order-functions) can
+keep calculations pure. However, **purity and idempotency are different
+properties**. `increment` is pure but not idempotent. A function that writes the
+same database value each time may be idempotent in effect, but is not pure
+because it performs I/O.
+
+For APIs, we usually care less about equal return values and more about equal
+**intended effects**. Repeating `setStatus('paid')` leaves the status paid;
+repeating `sendReceipt()` may send another email. One business operation often
+contains both kinds of work.
+
+## Idempotency in HTTP
+
+[RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2) defines
+`GET`, `HEAD`, `OPTIONS`, `TRACE`, `PUT`, and `DELETE` as idempotent. `POST` and
+`PATCH` are not idempotent by definition.
+
+| Method              | Idempotent semantics? | Intuition                                                                  |
+| ------------------- | --------------------- | -------------------------------------------------------------------------- |
+| `GET /orders/42`    | Yes                   | Reading repeatedly does not request a state change.                        |
+| `PUT /orders/42`    | Yes                   | Replacing a resource with the same representation has one intended effect. |
+| `DELETE /orders/42` | Yes                   | After one or many calls, the resource is absent.                           |
+| `POST /orders`      | No                    | Repeating creation may produce multiple orders.                            |
+| `PATCH /orders/42`  | Not guaranteed        | “Set status” may be repeatable; “increment total” is not.                  |
+
+Two qualifications matter. First, idempotent does not mean **safe**: `DELETE`
+changes state (making it unsafe), yet repeating it produces the same intended
+outcome (making it idempotent). Second, it does not promise identical responses. The first `DELETE` may
+return `204`, while a later one returns `404`. Servers may also log every request
+or retain a revision history. The user-requested effect is what stays the same.
+
+This property exists largely for retries. If a connection closes before a `PUT`
+response arrives, a client can repeat the request knowing its intended effect is
+unchanged. For a `POST` payment, application-level design must supply that
+guarantee.
+
+## Idempotency keys for unsafe operations
+
+An **idempotency key** gives one logical operation a stable identity across all
+its attempts. The client generates a high-entropy value—commonly a UUID—and
+sends the same value on every retry:
+
+```typescript
+const idempotencyKey = crypto.randomUUID()
+
+async function createPayment() {
+  return fetch('/api/payments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+    },
+    body: JSON.stringify({ orderId: 'order_42', amount: 4999 }),
+  })
+}
+```
+
+Generate the key **once per user intention**, outside retry loops. A new key on
+every attempt defeats deduplication; reusing one for tomorrow's purchase conflates
+two separate business operations, risking the wrong outcome on retry.
+
+On the server, store more than a “seen” boolean. A useful record includes:
+
+- tenant or account scope and the key;
+- a fingerprint of the operation and normalized request parameters;
+- state such as `processing`, `completed`, `retryable`, or `reconciling`;
+- the response status and body to replay;
+- creation and expiration timestamps.
+
+Scope keys by authenticated caller to avoid accidental collisions between
+customers. Compare request fingerprints so that reusing a key with a different
+amount or order is rejected—usually as `409 Conflict` or `422 Unprocessable
+Content`—instead of silently returning an unrelated result.
+
+```typescript
+type StoredResult = {
+  key: string
+  accountId: string
+  fingerprint: string
+  // Completed includes both successful and terminal error responses.
+  state: 'processing' | 'completed' | 'retryable' | 'reconciling'
+  statusCode?: number
+  responseBody?: unknown
+  expiresAt: Date
+}
+```
+
+The fingerprint should cover fields that define the operation, not volatile
+headers such as tracing IDs. Serialize them canonically before hashing; ordinary
+`JSON.stringify` may produce different strings when object key order differs.
+
+## The concurrency trap
+
+This tempting sequence is broken:
+
+```typescript
+if (!(await store.has(key))) {
+  const payment = await chargeCard(input)
+  await store.save(key, payment)
+}
+```
+
+Two requests can both pass the `has` check before either calls `save` (a time-of-check-to-time-of-use race condition), then both charge the
+card. The check and claim must be one atomic operation. A database unique
+constraint provides a compact concurrency primitive:
+
+```sql
+CREATE TABLE idempotency_records (
+  account_id TEXT NOT NULL,
+  key TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  state TEXT NOT NULL,
+  status_code INTEGER,
+  response_body JSON,
+  expires_at TIMESTAMP NOT NULL,
+  PRIMARY KEY (account_id, key)
+);
+```
+
+```typescript
+const claim = await records.insertIfAbsent({
+  accountId,
+  key,
+  fingerprint,
+  state: 'processing',
+  expiresAt: oneDayFromNow(),
+})
+
+let ownsClaim = claim.inserted
+
+if (!ownsClaim) {
+  const existing = claim.record
+  if (existing.fingerprint !== fingerprint) return conflict()
+  if (existing.state === 'completed') return replay(existing)
+
+  if (existing.state === 'retryable') {
+    // An atomic compare-and-set lets only one retry become the new owner.
+    ownsClaim = await records.reclaimRetryable(accountId, key)
+  }
+
+  if (!ownsClaim) {
+    return processingInProgress() // 409 or 202, possibly with Retry-After
+  }
+}
+
+try {
+  const outcome = await createPayment(input)
+
+  if (outcome.kind === 'retryable-before-effect') {
+    await records.markRetryable(accountId, key)
+  } else {
+    // Cache successes and terminal failures as completed outcomes.
+    await records.complete(accountId, key, outcome.status, outcome.body)
+  }
+
+  return outcome.response
+} catch (unknownOutcome) {
+  // Never make an ambiguous failure retryable: the charge may have happened.
+  await records.markReconciling(accountId, key)
+  throw unknownOutcome
+}
+```
+
+Only the request that wins the insert or an atomic `retryable` compare-and-set
+performs the operation. Duplicates receive a completed response or learn that
+the original is still processing or reconciling. In this model, `completed`
+means a cached outcome, whether it is a success or a terminal business error.
+`retryable` means the system knows no side effect began. An ambiguous exception
+becomes `reconciling`, never `retryable`, because the provider might have acted.
+Avoid holding a database transaction open across a slow provider call; it
+creates lock contention and still cannot make an external service participate
+atomically.
+
+Instead, model the operation as a state machine and investigate stale
+`processing` records. Move one to `retryable` only after proving no external
+effect began; otherwise move it to `reconciling`. For stronger workflows, commit
+the business change and an **outbox** message in one
+[ACID transaction](/my-learning-curve/blog/13-acid), then let a worker deliver
+the side effect. Give the downstream provider the same stable key when its API
+supports one. “Exactly once” is rarely a transport guarantee; it is usually the
+observed result of durable identities plus deduplication at every effect
+boundary.
+
+## What should be cached?
+
+Returning the original status and body makes retries predictable. Stripe's
+[idempotent request documentation](https://docs.stripe.com/api/idempotent_requests)
+describes saving the first result for a key, including error responses after
+execution begins. That is a provider policy, not a universal rule, but it exposes
+the decisions every API must make:
+
+- **Validation failure:** usually do not claim the key because no operation
+  began; the corrected request can retry.
+- **Known business rejection:** cache it if the decision belongs to the logical
+  operation, such as insufficient funds at execution time.
+- **Unknown failure after a side effect:** keep the key and reconcile; deleting
+  it could allow a duplicate charge.
+- **Transient failure before any effect:** release or mark the claim retryable.
+
+Document the policy. A client needs to know whether a retry returns the first
+response, re-evaluates current state, or reports an in-progress operation.
+
+Idempotency records cannot grow forever. Choose a **replay window** from the
+longest plausible retry period and business risk, publish it, and remove expired
+records with a background job. After expiration, the same key may represent a
+new operation, so retaining a durable business identifier—such as a unique
+`merchant_order_id`—can protect high-value operations beyond the cache's TTL.
+
+<Aside type="caution">
+  A TTL is a product guarantee, not merely a housekeeping setting. If clients
+  may retry for seven days, deleting keys after one hour reopens the duplicate
+  window.
+</Aside>
+
+## Webhooks: idempotency from the receiving side
+
+As the [Webhooks article](/my-learning-curve/blog/24-webhooks) explains, event
+delivery crosses the same unreliable network. A sender may retry after your
+handler committed its work but lost the acknowledgement. Stripe therefore
+advises receivers to log processed event IDs and skip duplicates in its
+[webhook best practices](https://docs.stripe.com/webhooks#handle-duplicate-events).
+
+The same atomic-claim rule applies:
+
+```typescript
+async function handlePaymentWebhook(event: PaymentEvent) {
+  const result = await database.transaction(async transaction => {
+    // A UNIQUE constraint on provider + eventId decides the race.
+    const claimed = await transaction.inbox.insertIfAbsent({
+      provider: 'payments-provider',
+      eventId: event.id,
+    })
+
+    if (!claimed) return 'duplicate'
+
+    await transaction.orders.markPaid(event.orderId)
+    await transaction.outbox.enqueue('send-receipt', {
+      eventId: event.id,
+      orderId: event.orderId,
+    })
+
+    return 'processed'
+  })
+
+  if (result === 'duplicate') {
+    return new Response('Already processed', { status: 200 })
+  }
+
+  return new Response('Accepted', { status: 200 })
+}
+```
+
+Here the inbox claim, local business update, and outbox message either commit
+together or all roll back. A crash cannot leave a permanent “processed” marker
+while skipping the order update. The duplicate result is handled only after the
+transaction closes. Verify the webhook signature **before** trusting its event
+ID. Also distinguish a redelivery of one event from two provider events
+describing the same business fact; the latter may require a domain key such as
+`(eventType, paymentId)` rather than only an envelope ID.
+
+## Practical design checklist
+
+Before calling an endpoint or consumer idempotent, ask:
+
+1. What stable identifier represents one business intention?
+2. Which request fields are fingerprinted, and how are they normalized?
+3. Can two duplicates race, and what atomic constraint chooses the winner?
+4. Where is the result stored, and which failures are replayed?
+5. What happens to a duplicate while the first request is still processing?
+6. How long is the replay window, and what protects operations after it closes?
+7. Are database writes and queued work joined through an ACID transaction or an
+   outbox?
+8. Does every external side effect accept its own idempotency key?
+9. Can operators inspect, retry, and reconcile stuck operations safely?
+
+Test the unpleasant paths, not just two sequential happy requests. Fire
+duplicates concurrently. Crash after the provider succeeds but before saving
+the response. Retry a cached error, reuse a key with changed parameters, and
+retry after expiration. Observability should include the key, operation state,
+replay count, age, and correlation IDs—without logging sensitive payloads.
+
+## Related computer-science concepts
+
+- **Pure functions:** isolate deterministic calculation from effects, making the
+  non-idempotent boundaries easier to identify.
+- **ACID and compare-and-set:** provide atomic claims and protect invariants when
+  duplicate requests race.
+- **At-least-once delivery:** assumes messages can repeat; idempotent consumers
+  turn repetition into a safe recovery strategy.
+- **Outbox and inbox patterns:** durably bridge database state with outgoing and
+  incoming messages.
+- **Commutativity:** operations may be safely reordered, while idempotency makes
+  repetition safe. Neither property implies the other.
+
+## Conclusion
+
+Idempotency is not a magic header and not a claim that every response is equal.
+It is an end-to-end design property: identify one intention, claim it atomically,
+bind the key to its parameters, store a durable outcome, and make each downstream
+effect safe to repeat. Do that well and timeouts become retryable events instead
+of payment-support tickets—a trade most teams will happily take.
+
+## References
+
+- [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2) — the standard definition of HTTP idempotency and retry semantics.
+- [Stripe: Idempotent requests](https://docs.stripe.com/api/idempotent_requests) — a production API's key, parameter, result, and expiration behavior.
+- [Stripe: Handle duplicate webhook events](https://docs.stripe.com/webhooks#handle-duplicate-events) — guidance for deduplicating webhook deliveries.
+- [GitHub: Redelivering webhooks](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks) — an example of explicit webhook redelivery and delivery identifiers.
+- [AWS Builders' Library: Making retries safe with idempotent APIs](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/) — design trade-offs for idempotent distributed APIs.
+
+<Disclaimer />
