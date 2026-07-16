@@ -12,7 +12,6 @@ const createLinks = (baseUrl = '') =>
     guides: (id: string = '') => `${baseUrl}/learn/guides/${id}`,
     reference: (id: string = '') => `${baseUrl}/reference/${id}`,
     snippets: (id: string = '') => `${baseUrl}/snippets/${id}`,
-    feeds: (id: string = '') => `${baseUrl}/feeds/${id}`,
     blog: () => `${baseUrl}/blog`,
   }) as const satisfies Record<string, (id?: string) => string>
 
