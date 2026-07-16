@@ -49,7 +49,10 @@
   gap: var(--gap);
 
   @media (width >= 40ch) {
-    grid-template-columns: [left-start] 1fr [left-end right-start] 1fr [right-end];
+    grid-template-columns: [left-start] minmax(
+        0,
+        1fr
+      ) [left-end right-start] minmax(0, 1fr) [right-end];
   }
 
   & > .group {

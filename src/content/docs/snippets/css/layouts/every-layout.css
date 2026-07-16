@@ -144,7 +144,7 @@
   gap: var(--gap);
   grid-template-columns: repeat(
     auto-fit,
-    [col-start] minmax(min(var(--min-size), 100%), 1fr) [col-end]
+    [col-start] minmax(min(var(--min-size), 100%), minmax(0, 1fr)) [col-end]
   );
 }
 

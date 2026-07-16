@@ -35,7 +35,7 @@
   display: grid;
   grid-template-columns:
     [sidebar-start] minmax(min(var(--sidebar-min), 100%), var(--sidebar-max))
-    [sidebar-end content-start] 1fr
+    [sidebar-end content-start] minmax(0, 1fr)
     [content-end];
 }
 
@@ -54,7 +54,7 @@
 /** 12-Span Grid */
 .grid-12 {
   display: grid;
-  grid-template-columns: repeat(12, [col-start] 1fr [col-end]);
+  grid-template-columns: repeat(12, [col-start] minmax(0, 1fr) [col-end]);
 }
 
 .child-full-with {
@@ -70,7 +70,7 @@
   gap: var(--gap);
   grid-template-columns: repeat(
     auto-fit,
-    [col-start] minmax(min(var(--min), 100%), 1fr) [col-end]
+    [col-start] minmax(min(var(--min), 100%), minmax(0, 1fr)) [col-end]
   );
 }
 
