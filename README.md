@@ -1,6 +1,10 @@
 # My Learning Curve
 
-A curated collection of programming concepts, development guides, and code snippets. This repository serves as a personal knowledge base and reference for software engineering best practices.
+A curated collection of programming concepts, development guides, and code
+snippets. This repository serves as a personal knowledge base and reference for
+software engineering best practices.
+
+[Website](https://edouardmisset.github.io/my-learning-curve/)
 
 ## 📚 What's Inside
 
