@@ -1,0 +1,328 @@
+---
+date: 2026-07-21
+title: 'Never Nesting: Flatten Your Code Without Flattening Its Meaning'
+excerpt: Flatten control flow with guard clauses and focused functions while keeping the nesting that expresses your domain.
+tags:
+  [
+    'Best Practices',
+    'Clean Code',
+    'Refactoring',
+    'Software Engineering',
+    'TypeScript',
+  ]
+lastUpdated: 2026-07-21
+---
+
+import { Aside } from '@astrojs/starlight/components'
+import Disclaimer from '~/components/Disclaimer.astro'
+
+> If you need more than 3 levels of indentation, you're screwed anyway, and
+> should fix your program.
+>
+> ~ [Linux kernel coding style](https://docs.kernel.org/process/coding-style.html#indentation)
+
+## TL;DR
+
+"Never nesting" is a memorable heuristic, not a ban on every indented block.
+When control flow drifts several levels to the right, use guard clauses, early
+`continue`, named conditions, and focused functions to make the main path read
+from top to bottom. Treat three levels as a prompt to review the code, not as a
+universal law. Keep nesting when it genuinely represents the structure of the
+problem.
+
+## Introduction
+
+You open a function and meet an `if`. Inside it is a loop. Inside the loop is
+another `if`, then another. By the time you reach the line that performs the
+actual work, the code has moved halfway across the screen and you are mentally
+carrying every condition that led there.
+
+This is the problem behind the deliberately provocative advice to **never
+nest**. Deeply nested control flow makes the happy path harder to find and asks
+the reader to remember too much context at once. Flattening it can turn a maze
+of conditions into a sequence of decisions.
+
+But "never" is doing rhetorical work. Some nesting is natural, and replacing
+every indented block with an abstraction can make code worse. The useful rule
+is simpler: **keep control flow as flat as the meaning allows**.
+
+{/* <!-- truncate --> */}
+
+## What Kind of Nesting Are We Talking About?
+
+The main target is **control-flow nesting** created by constructs such as:
+
+- `if` and `else` branches;
+- loops inside branches, or branches inside loops;
+- callbacks inside callbacks;
+- `try` blocks and other scopes that accumulate more branches.
+
+These layers change which statements execute. To understand a deeply nested
+line, you must reconstruct every active condition above it.
+
+Structural nesting is different. An HTML document, a JSX component tree, a
+filesystem, and a category tree are hierarchical by nature. Flattening them
+may erase useful meaning rather than improve readability. A nested comment
+thread should probably remain nested.
+
+## Why Deep Control Flow Hurts
+
+Indentation is not the enemy. The problem is the growing stack of questions a
+reader must keep in mind:
+
+- Is the user active?
+- Does the order contain items?
+- Is a payment method available?
+- Is every item in stock?
+
+At the deepest level, none of those questions is visible on the current line,
+yet all of them determine whether it runs. The important operation is hidden
+behind validation and exceptional cases.
+
+Deep nesting also makes branches harder to compare. An `else` near the bottom
+may belong to a condition far above it, and adding one more case can shift a
+large block another level to the right. The code can still be correct, but its
+shape makes that correctness expensive to verify.
+
+## Flatten the Main Path
+
+Consider an order-processing function. Its business rules are straightforward,
+but the nested version reveals them in reverse order:
+
+```typescript
+type Order = {
+  customer: { active: boolean }
+  items: Array<{ sku: string; inStock: boolean }>
+  paymentMethod?: string
+}
+
+const processOrder = (order: Order): string => {
+  if (order.customer.active) {
+    if (order.items.length > 0) {
+      if (order.paymentMethod) {
+        if (order.items.every(item => item.inStock)) {
+          charge(order.paymentMethod)
+          reserve(order.items)
+          return 'confirmed'
+        } else {
+          return 'out-of-stock'
+        }
+      } else {
+        return 'payment-required'
+      }
+    } else {
+      return 'empty-order'
+    }
+  } else {
+    return 'inactive-customer'
+  }
+}
+```
+
+The successful operation is buried four levels deep. Every failure branch adds
+an `else`, even though each branch already returns.
+
+### 1. Reject Exceptional Cases Early
+
+A **guard clause** checks a precondition and exits when that condition is not
+met. Once the exceptional cases are handled, the rest of the function can
+describe the normal path:
+
+```typescript
+const processOrder = (order: Order): string => {
+  if (!order.customer.active) return 'inactive-customer'
+  if (order.items.length === 0) return 'empty-order'
+  if (!order.paymentMethod) return 'payment-required'
+  if (order.items.some(item => !item.inStock)) return 'out-of-stock'
+
+  charge(order.paymentMethod)
+  reserve(order.items)
+
+  return 'confirmed'
+}
+```
+
+The behavior has not changed, but the reading order has. Preconditions appear
+first, one at a time, followed by the happy path at the base indentation level.
+There is no need for `else` after a branch that returns.
+
+This is the refactoring Martin Fowler calls
+[Replace Nested Conditional with Guard Clauses](https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html).
+It works especially well when the branches are checks that prevent the main
+operation from running.
+
+### 2. Name Conditions That Carry Meaning
+
+Flattening should not produce one enormous Boolean expression. If a condition
+needs careful parsing, give the idea a name:
+
+```typescript
+const hasUnavailableItems = order.items.some(item => !item.inStock)
+
+if (hasUnavailableItems) return 'out-of-stock'
+```
+
+The name lets the reader reason in business terms instead of repeatedly
+decoding array operations and negations. A named predicate is valuable when it
+explains intent; extracting every trivial comparison only creates noise.
+
+### 3. Extract Coherent Work, Not Arbitrary Lines
+
+If the happy path still contains several distinct responsibilities, extract a
+function around a meaningful operation:
+
+```typescript
+const completeOrder = (order: Order, paymentMethod: string): void => {
+  charge(paymentMethod)
+  reserve(order.items)
+  sendConfirmation(order)
+}
+```
+
+Function extraction reduces nesting when it creates a useful boundary. Avoid
+turning every few lines into a tiny function whose name merely restates its
+implementation. The goal is easier reasoning, not the smallest possible
+functions.
+
+## Flatten Branches Inside Loops
+
+Guard clauses become `continue` statements inside loops. Instead of nesting the
+work under every eligibility rule, skip entries that cannot use it:
+
+```typescript
+for (const user of users) {
+  if (user.active) {
+    if (user.email) {
+      if (user.preferences.marketing) {
+        sendNewsletter(user.email)
+      }
+    }
+  }
+}
+```
+
+The flat version keeps the operation visible:
+
+```typescript
+for (const user of users) {
+  if (!user.active) continue
+  if (!user.email) continue
+  if (!user.preferences.marketing) continue
+
+  sendNewsletter(user.email)
+}
+```
+
+This pattern works when each condition independently disqualifies an item. If
+the branches represent different operations rather than simple exclusions, a
+`switch`, lookup table, or separate strategy may express the alternatives more
+clearly.
+
+## Flatten Async Callback Chains
+
+Callbacks can create nesting even without many conditionals:
+
+```typescript
+getAccount(accountId, account => {
+  if (account) {
+    getPlan(account.planId, plan => {
+      if (plan) {
+        activateFeatures(account, plan)
+      }
+    })
+  }
+})
+```
+
+When promise-based APIs are available, `async`/`await` restores a linear reading
+order, and guard clauses handle missing values:
+
+```typescript
+const activateAccount = async (accountId: string): Promise<void> => {
+  const account = await getAccount(accountId)
+  if (!account) return
+
+  const plan = await getPlan(account.planId)
+  if (!plan) return
+
+  activateFeatures(account, plan)
+}
+```
+
+`async`/`await` does not remove complexity or error handling; it only gives
+asynchronous steps a flatter syntax. Failures still need an intentional policy:
+handle them locally, let them propagate, or convert them into an explicit
+result.
+
+## Three Levels Is a Warning, Not a Law
+
+The Linux kernel's famous line about three indentation levels comes from a
+specific coding-style discussion involving eight-character tabs and
+80-character terminals. Its broader lesson still travels well: indentation is
+a visible warning that a function may be doing too much.
+
+One or two levels are usually easy to follow. When control flow reaches three,
+pause and check whether a guard clause, named condition, or focused function
+would expose the intent. Sometimes the answer is no. A number alone cannot tell
+whether a nested block mirrors the problem or merely obscures it.
+
+### A Little Help From Tools
+
+ESLint's [`max-depth`](https://eslint.org/docs/latest/rules/max-depth) rule can
+enforce a team-selected nesting limit. Keep it as a warning signal rather than
+a quality oracle: a function at depth two can be confusing, while a clear
+hierarchical operation may reasonably go deeper.
+
+For JavaScript and TypeScript in VS Code,
+[P42 JS Assistant](https://github.com/lgrammel/js-assistant) offers code actions
+such as introducing an early `return` or `continue`, removing an unnecessary
+`else`, and merging nested conditions. These assists can speed up mechanical
+refactors, but the developer still decides whether the flatter result better
+expresses the intent.
+
+## When Flattening Goes Too Far
+
+Flat code is not automatically simple code. Watch for these mistakes:
+
+- **Too many exits:** a long function with returns scattered everywhere can be
+  as hard to trace as a nested one.
+- **Duplicated cleanup:** early returns are dangerous when each path must
+  release a resource or perform the same final action. Centralize the cleanup
+  or use constructs such as `finally`.
+- **Fragmented functions:** excessive extraction forces readers to jump between
+  many files or helpers to understand one small operation.
+- **Boolean soup:** collapsing several nested decisions into one dense condition
+  saves indentation but not mental effort.
+- **Lost hierarchy:** flattening JSX, tree traversal, recursive data, or other
+  naturally hierarchical structures can hide the domain model.
+
+More advanced techniques such as lookup tables, state machines, or polymorphism
+can replace complicated branching when the problem genuinely has multiple
+states or behaviors. They should solve complexity that already exists, not be
+introduced merely to avoid a second `if`.
+
+## Conclusion
+
+"Never nesting" is best understood as a prompt to make the important path easy
+to see. Handle exclusions early, name the concepts hidden inside conditions,
+and extract work only where a meaningful boundary exists. Keep nesting when it
+communicates real hierarchy.
+
+When a function starts drifting to the right, use this checklist:
+
+1. Identify the happy path.
+2. Reject invalid or exceptional cases early.
+3. Replace redundant `else` blocks after `return`, `throw`, or `continue`.
+4. Name complex conditions in domain language.
+5. Extract coherent responsibilities, not arbitrary chunks of lines.
+6. Stop when the code reads clearly from top to bottom.
+
+## References
+
+- [Linux kernel coding style](https://docs.kernel.org/process/coding-style.html#indentation)
+- [Replace Nested Conditional with Guard Clauses](https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html)
+- [ESLint `max-depth`](https://eslint.org/docs/latest/rules/max-depth)
+- [P42 JS Assistant](https://github.com/lgrammel/js-assistant)
+- [Never Nesting](https://www.youtube.com/watch?v=QDV1YzTauDM)
+
+<Disclaimer />
