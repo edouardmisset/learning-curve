@@ -4,10 +4,10 @@ title: 'Data Analysis Techniques'
 description: 'Overview of statistical and machine learning techniques for data analysis.'
 tags: ['data-analysis', 'statistical-analysis', 'machine-learning', 'guide']
 prev:
-  link: /my-learning-curve/learn/tutorials/data-analysis/04-explore-data
+  link: /learning-curve/learn/tutorials/data-analysis/04-explore-data
   label: Explore Data
 next:
-  link: /my-learning-curve/learn/tutorials/data-analysis/06-interpretation
+  link: /learning-curve/learn/tutorials/data-analysis/06-interpretation
   label: Interpretation
 ---
 

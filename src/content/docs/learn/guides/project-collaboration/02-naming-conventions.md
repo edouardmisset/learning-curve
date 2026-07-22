@@ -4,10 +4,10 @@ title: 'Naming Conventions'
 description: 'Guidelines for consistent and readable naming conventions in the project.'
 tags: [naming, conventions, readability]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/01-development-checklist
+  link: /learning-curve/learn/guides/project-collaboration/01-development-checklist
   label: Development Checklist
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/03-folder-structure
+  link: /learning-curve/learn/guides/project-collaboration/03-folder-structure
   label: Folder Structure
 ---
 

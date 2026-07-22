@@ -1,8 +1,10 @@
+export const SITE_NAME = 'Learning Curve' as const
+export const REPOSITORY_NAME = 'learning-curve' as const
 export const BASE_WEBSITE_URL = 'https://edouardmisset.github.io' as const
 export const GITHUB_PROFILE_URL = 'https://github.com/edouardmisset' as const
-export const BASE_PATH = '/my-learning-curve' as const
+export const BASE_PATH = `/${REPOSITORY_NAME}` as const
 export const WEBSITE_URL = BASE_WEBSITE_URL + BASE_PATH
-export const REPO_URL = GITHUB_PROFILE_URL + BASE_PATH
+export const REPO_URL = `${GITHUB_PROFILE_URL}/${REPOSITORY_NAME}` as const
 
 // Factory function to create link helpers with or without base URL
 const createLinks = (baseUrl = '') =>

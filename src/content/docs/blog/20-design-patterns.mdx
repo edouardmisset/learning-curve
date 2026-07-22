@@ -11,7 +11,7 @@ tags:
     'OOP',
     'Software Design',
   ]
-lastUpdated: 2026-07-06
+lastUpdated: 2026-07-22
 ---
 
 import Disclaimer from '~/components/Disclaimer.astro'
@@ -24,7 +24,7 @@ Design patterns are reusable solutions to common design problems, not rules you 
 
 When code grows, the hardest part is not writing new features; it is keeping changes predictable. Design patterns are a shared language for proven structures so teams can communicate and evolve systems with less friction. They are tools, not trophies, and misusing them can make code harder to maintain.
 
-These patterns work well with [SOLID principles](/my-learning-curve/blog/11-solid-principles) and help you apply the [DRY principle](/my-learning-curve/blog/10-dry-principle) across different [programming paradigms](/my-learning-curve/blog/17-programming-paradigms).
+These patterns work well with [SOLID principles](/learning-curve/blog/11-solid-principles) and help you apply the [DRY principle](/learning-curve/blog/10-dry-principle) across different [programming paradigms](/learning-curve/blog/17-programming-paradigms).
 
 ## Definition
 
@@ -34,7 +34,7 @@ These patterns work well with [SOLID principles](/my-learning-curve/blog/11-soli
 >
 > ~ [Refactoring Guru](https://refactoring.guru/design-patterns)
 
-Here are some of the most relevant patterns in a TypeScript [Object-Oriented Programming (OOP)](/my-learning-curve/blog/15-oop) context.
+Here are some of the most relevant patterns in a TypeScript [Object-Oriented Programming (OOP)](/learning-curve/blog/15-oop) context.
 
 {/* <!-- truncate --> */}
 
@@ -52,11 +52,11 @@ These patterns provide object creation mechanisms that increase flexibility and 
 
 **When to use:** When exactly one instance of a class is needed to coordinate actions across the system.
 
-| Benefits                                        | Drawbacks                                                                                                                                                    |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Guarantees a single instance exists globally    | Creates global state, making testing harder                                                                                                                  |
-| Provides a global access point to that instance | Can hide dependencies and violate the [Single Responsibility Principle](/my-learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) |
-|                                                 | Difficult to manage in concurrent environments                                                                                                               |
+| Benefits                                        | Drawbacks                                                                                                                                                 |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guarantees a single instance exists globally    | Creates global state, making testing harder                                                                                                               |
+| Provides a global access point to that instance | Can hide dependencies and violate the [Single Responsibility Principle](/learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) |
+|                                                 | Difficult to manage in concurrent environments                                                                                                            |
 
 ```typescript
 class Database {
@@ -113,11 +113,11 @@ db.query('SELECT * FROM users')
 
 **When to use:** When you need to provide a library of related products without specifying their concrete classes.
 
-| Benefits                                                                                                      | Drawbacks                                              |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Decouples object creation from usage                                                                          | Requires creating new subclasses for each product type |
-| Makes it easy to add new types without modifying existing code                                                | Can introduce unnecessary complexity for simple cases  |
-| Follows the [Open/Closed Principle](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) |                                                        |
+| Benefits                                                                                                   | Drawbacks                                              |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Decouples object creation from usage                                                                       | Requires creating new subclasses for each product type |
+| Makes it easy to add new types without modifying existing code                                             | Can introduce unnecessary complexity for simple cases  |
+| Follows the [Open/Closed Principle](/learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) |                                                        |
 
 ```typescript
 interface Notification {
@@ -228,11 +228,11 @@ const admin = new UserBuilder('Alice')
 
 **When to use:** When your code needs to work with various families of related products without depending on their concrete classes.
 
-| Benefits                                                                                                                                                                                                                    | Drawbacks                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Ensures products from a factory are compatible                                                                                                                                                                              | Code becomes more complicated with many interfaces and classes |
-| Decouples code from concrete product classes                                                                                                                                                                                | Can be overkill if product families rarely change              |
-| Follows [Single Responsibility](/my-learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) and [Open/Closed](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) Principles |                                                                |
+| Benefits                                                                                                                                                                                                              | Drawbacks                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Ensures products from a factory are compatible                                                                                                                                                                        | Code becomes more complicated with many interfaces and classes |
+| Decouples code from concrete product classes                                                                                                                                                                          | Can be overkill if product families rarely change              |
+| Follows [Single Responsibility](/learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) and [Open/Closed](/learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) Principles |                                                                |
 
 ```typescript
 interface Button {
@@ -320,11 +320,11 @@ These patterns explain how to assemble objects and classes into larger structure
 
 **When to use:** When you want to use an existing class but its interface doesn't match your needs.
 
-| Benefits                                                                                                                                                                                                                    | Drawbacks                                                                  |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Allows incompatible interfaces to work together                                                                                                                                                                             | Adds an extra layer of indirection                                         |
-| Follows [Single Responsibility](/my-learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) and [Open/Closed](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) Principles | Sometimes it's simpler to change the service class to match your interface |
-| Isolates conversion logic from business logic                                                                                                                                                                               |                                                                            |
+| Benefits                                                                                                                                                                                                              | Drawbacks                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Allows incompatible interfaces to work together                                                                                                                                                                       | Adds an extra layer of indirection                                         |
+| Follows [Single Responsibility](/learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) and [Open/Closed](/learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) Principles | Sometimes it's simpler to change the service class to match your interface |
+| Isolates conversion logic from business logic                                                                                                                                                                         |                                                                            |
 
 ```typescript
 // Your application expects this interface
@@ -362,11 +362,11 @@ logger.log('User logged in')
 
 **When to use:** When you need to add responsibilities to objects dynamically without affecting other objects.
 
-| Benefits                                                                                                                                                             | Drawbacks                                                   |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Extends object behavior without modifying the original                                                                                                               | Hard to remove a specific wrapper from the stack            |
-| Adds responsibilities dynamically at runtime                                                                                                                         | Can result in many small objects and complex initialization |
-| Follows [Single Responsibility](/my-learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) by dividing functionality into separate classes |                                                             |
+| Benefits                                                                                                                                                          | Drawbacks                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Extends object behavior without modifying the original                                                                                                            | Hard to remove a specific wrapper from the stack            |
+| Adds responsibilities dynamically at runtime                                                                                                                      | Can result in many small objects and complex initialization |
+| Follows [Single Responsibility](/learning-curve/blog/11-solid-principles#s---single-responsibility-principle-srp) by dividing functionality into separate classes |                                                             |
 
 #### Structural Decorator (Classic Wrapper)
 
@@ -434,7 +434,7 @@ service.getUser(1) // Logs: Calling getUser with args: [1], then Result: {...}
 
 #### Functional Alternative: Higher-Order Functions
 
-See more about [Higher-Order Functions](/my-learning-curve/blog/05-higher-order-functions).
+See more about [Higher-Order Functions](/learning-curve/blog/05-higher-order-functions).
 
 ```typescript
 const withLogging =
@@ -679,14 +679,14 @@ These patterns are concerned with algorithms and the assignment of responsibilit
 
 **When to use:** When changes to one object require updating others, and you don't know how many objects need to be updated.
 
-| Benefits                                                                                                                                                    | Drawbacks                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Establishes dynamic relationships between objects at runtime                                                                                                | Subscriber notification order is not guaranteed                      |
-| Follows [Open/Closed Principle](/my-learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) (add new subscribers without modifying publisher) | Can lead to memory leaks if subscribers aren't properly unsubscribed |
-| Enables loose coupling between publishers and subscribers                                                                                                   |                                                                      |
+| Benefits                                                                                                                                                 | Drawbacks                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Establishes dynamic relationships between objects at runtime                                                                                             | Subscriber notification order is not guaranteed                      |
+| Follows [Open/Closed Principle](/learning-curve/blog/11-solid-principles#o---openclosed-principle-ocp) (add new subscribers without modifying publisher) | Can lead to memory leaks if subscribers aren't properly unsubscribed |
+| Enables loose coupling between publishers and subscribers                                                                                                |                                                                      |
 
 Read [The Observer Pattern: Events Without Tight
-Coupling](/my-learning-curve/blog/27-observer-pattern) for a TypeScript
+Coupling](/learning-curve/blog/27-observer-pattern) for a TypeScript
 implementation and a deeper dive.
 
 ### Strategy

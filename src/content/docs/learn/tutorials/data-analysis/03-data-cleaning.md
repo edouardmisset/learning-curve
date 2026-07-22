@@ -4,10 +4,10 @@ title: 'Data Cleaning'
 description: 'Techniques for cleaning and preparing data for analysis.'
 tags: ['data-analysis', 'data-cleaning', 'guide']
 prev:
-  link: /my-learning-curve/learn/tutorials/data-analysis/02-data-gathering
+  link: /learning-curve/learn/tutorials/data-analysis/02-data-gathering
   label: Data Gathering
 next:
-  link: /my-learning-curve/learn/tutorials/data-analysis/04-explore-data
+  link: /learning-curve/learn/tutorials/data-analysis/04-explore-data
   label: Data Exploration
 ---
 

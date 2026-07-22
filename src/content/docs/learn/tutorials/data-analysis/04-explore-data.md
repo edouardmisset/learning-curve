@@ -4,10 +4,10 @@ title: 'Explore Data'
 description: 'Techniques for exploratory data analysis (EDA).'
 tags: ['data-analysis', 'exploratory-data-analysis', 'guide']
 prev:
-  link: /my-learning-curve/learn/tutorials/data-analysis/03-data-cleaning
+  link: /learning-curve/learn/tutorials/data-analysis/03-data-cleaning
   label: Data Cleaning
 next:
-  link: /my-learning-curve/learn/tutorials/data-analysis/05-analyze-data
+  link: /learning-curve/learn/tutorials/data-analysis/05-analyze-data
   label: Data Analysis
 ---
 

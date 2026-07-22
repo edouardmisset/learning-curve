@@ -3,9 +3,9 @@ date: 2023-03-15
 title: My setup
 description: Learn about my development setup and tools.
 tags: ['setup', 'development', 'tools']
-lastUpdated: 2026-05-16
+lastUpdated: 2026-07-22
 next:
-  link: /my-learning-curve/reference/cheatsheets/vs-code-shortcuts
+  link: /learning-curve/reference/cheatsheets/vs-code-shortcuts
   label: VS Code Shortcuts
 ---
 

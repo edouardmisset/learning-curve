@@ -4,10 +4,10 @@ title: 'Testing'
 description: 'Overview of unit and end-to-end testing strategies.'
 tags: [testing, unit-tests, e2e-tests]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/08-tech-stack
+  link: /learning-curve/learn/guides/project-collaboration/08-tech-stack
   label: Tech Stack
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/10-style
+  link: /learning-curve/learn/guides/project-collaboration/10-style
   label: Style
 ---
 

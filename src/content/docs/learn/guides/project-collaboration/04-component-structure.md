@@ -4,10 +4,10 @@ title: 'Component Structure'
 description: 'Best practices for organizing and structuring React components.'
 tags: [components, structure, best-practices]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/03-folder-structure
+  link: /learning-curve/learn/guides/project-collaboration/03-folder-structure
   label: Folder Structure
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/05-conventional-commits
+  link: /learning-curve/learn/guides/project-collaboration/05-conventional-commits
   label: Conventional Commits
 ---
 

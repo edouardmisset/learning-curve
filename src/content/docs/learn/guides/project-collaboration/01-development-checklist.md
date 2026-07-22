@@ -4,10 +4,10 @@ title: 'Dev Checklist'
 description: 'Checklist to ensure code quality and adherence to project standards before committing.'
 tags: [checklist, development, quality]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/00-getting-started
+  link: /learning-curve/learn/guides/project-collaboration/00-getting-started
   label: Getting Started
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/02-naming-conventions
+  link: /learning-curve/learn/guides/project-collaboration/02-naming-conventions
   label: Naming Conventions
 ---
 
@@ -15,7 +15,7 @@ Before you commit any changes, please check your work against these requirements
 
 ## 0. Prerequisites
 
-See the [Getting Started](/my-learning-curve/learn/guides/project-collaboration/00-getting-started)
+See the [Getting Started](/learning-curve/learn/guides/project-collaboration/00-getting-started)
 
 ## 1. Config
 
@@ -27,8 +27,8 @@ cypress.env.json.dev cypress.env.json` & modify the required values...) for
 
 ## 2. Dev
 
-- Make sure you follow the **[folder](/my-learning-curve/learn/guides/project-collaboration/03-folder-structure) and [component](/my-learning-curve/learn/guides/project-collaboration/04-component-structure) structure**
-- Make sure you follow the **[naming](/my-learning-curve/learn/guides/project-collaboration/02-naming-conventions) conventions**
+- Make sure you follow the **[folder](/learning-curve/learn/guides/project-collaboration/03-folder-structure) and [component](/learning-curve/learn/guides/project-collaboration/04-component-structure) structure**
+- Make sure you follow the **[naming](/learning-curve/learn/guides/project-collaboration/02-naming-conventions) conventions**
 
 ## 3. Test
 
@@ -43,7 +43,7 @@ cypress.env.json.dev cypress.env.json` & modify the required values...) for
 - Make sure you do not have **unused imports** (check your linter)
 - Make sure your code is **formatted** (`pnpm format`)
 - Make sure your code passes **static code analysis** checks (`pnpm type:checking`)
-- Make sure your commit message follows the [**conventional commits**](/my-learning-curve/learn/guides/project-collaboration/05-conventional-commits) guidelines
+- Make sure your commit message follows the [**conventional commits**](/learning-curve/learn/guides/project-collaboration/05-conventional-commits) guidelines
 
 ## 5. Merge
 

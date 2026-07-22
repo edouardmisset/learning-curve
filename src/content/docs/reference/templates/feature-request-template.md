@@ -4,10 +4,10 @@ title: Feature Request Template
 description: A template for submitting feature requests
 tags: ['template', 'feature', 'issue']
 prev:
-  link: /my-learning-curve/reference/templates/bug-report-template
+  link: /learning-curve/reference/templates/bug-report-template
   label: Bug Report Template
 next:
-  link: /my-learning-curve/reference/templates/pr-template
+  link: /learning-curve/reference/templates/pr-template
   label: Pull Request Template
 ---
 

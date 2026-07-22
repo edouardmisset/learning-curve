@@ -4,10 +4,10 @@ title: 'Data Gathering'
 description: 'Methods and examples for collecting data for analysis.'
 tags: ['data-analysis', 'data-gathering', 'guide']
 prev:
-  link: /my-learning-curve/learn/tutorials/data-analysis/01-definition
+  link: /learning-curve/learn/tutorials/data-analysis/01-definition
   label: Define Your Question
 next:
-  link: /my-learning-curve/learn/tutorials/data-analysis/03-data-cleaning
+  link: /learning-curve/learn/tutorials/data-analysis/03-data-cleaning
   label: Data Cleaning
 ---
 

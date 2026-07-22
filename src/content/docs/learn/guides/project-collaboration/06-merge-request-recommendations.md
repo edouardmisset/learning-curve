@@ -4,10 +4,10 @@ title: 'Merge Request Recommendations'
 description: 'Best practices for creating and reviewing merge requests.'
 tags: [merge-requests, git, collaboration]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/05-conventional-commits
+  link: /learning-curve/learn/guides/project-collaboration/05-conventional-commits
   label: Conventional Commits
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/07-git-workflow
+  link: /learning-curve/learn/guides/project-collaboration/07-git-workflow
   label: Git Workflow
 ---
 

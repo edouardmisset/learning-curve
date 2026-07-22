@@ -15,7 +15,7 @@ tags:
     'Declarative Programming',
     'Imperative Programming',
   ]
-lastUpdated: 2026-03-24
+lastUpdated: 2026-07-22
 ---
 
 import Disclaimer from '~/components/Disclaimer.astro'
@@ -44,7 +44,7 @@ The [history of programming paradigms](https://read.learnyard.com/low-level-desi
 
 Paradigms are often categorized hierarchically. Here is a breakdown of the most common ones:
 
-![Programming Paradigms Diagram - By MovGP0 - Own work, CC BY-SA 3.0, https://commons.wikimedia.org/w/index.php?curid=25236323](/my-learning-curve/src/assets/programming-paradigms.png)
+![Programming Paradigms Diagram - By MovGP0 - Own work, CC BY-SA 3.0, https://commons.wikimedia.org/w/index.php?curid=25236323](/learning-curve/src/assets/programming-paradigms.png)
 
 ### 1. Imperative Paradigm
 
@@ -52,7 +52,7 @@ Paradigms are often categorized hierarchically. Here is a breakdown of the most 
 Code directly controls execution flow and state change using explicit statements.
 
 - **Procedural:** Organized as procedures that call each other.
-- **[Object-Oriented (OOP)](/my-learning-curve/blog/15-oop):** Organized as objects containing both data structure and associated behavior.
+- **[Object-Oriented (OOP)](/learning-curve/blog/15-oop):** Organized as objects containing both data structure and associated behavior.
   - **Class-based:** Inheritance is achieved by defining classes of objects (e.g., Java, C#).
   - **Prototype-based:** Inheritance is achieved via cloning of instances (e.g., JavaScript).
   - **Object-based:** Encapsulates state and behavior without necessarily supporting full inheritance.
@@ -62,10 +62,10 @@ Code directly controls execution flow and state change using explicit statements
 **"What to do."**  
 Code declares properties of the desired result without specifying detailed state changes.
 
-- **Functional (FP):** The desired result is the value of a series of function evaluations. It avoids state and mutable data (often utilizing [Higher-Order Functions](/my-learning-curve/blog/05-higher-order-functions)).
+- **Functional (FP):** The desired result is the value of a series of function evaluations. It avoids state and mutable data (often utilizing [Higher-Order Functions](/learning-curve/blog/05-higher-order-functions)).
 - **[Logic](https://en.wikipedia.org/wiki/Logic_programming):** The result is the answer to a question about a system of facts and rules (e.g., [Prolog](https://en.wikipedia.org/wiki/Prolog)).
 - **Reactive:** The result is declared with data streams and the propagation of change.
-- **Database/Query:** Asks for data matching criteria (e.g., [SQL](https://en.wikipedia.org/wiki/SQL)). Reliability is often ensured by [ACID](/my-learning-curve/blog/13-acid) properties.
+- **Database/Query:** Asks for data matching criteria (e.g., [SQL](https://en.wikipedia.org/wiki/SQL)). Reliability is often ensured by [ACID](/learning-curve/blog/13-acid) properties.
 - **Constraint:** Relations between variables are expressed as constraints directing allowable solutions.
 - **Dataflow:** Forced recalculation of formulas when data values change (e.g., spreadsheets).
 
@@ -122,12 +122,12 @@ console.log(account.getBalance()) // 1300
 - **Use Cases:** Large-scale enterprise systems, GUI applications, game development, complex software modeling.
 - **Pros:**
   - **Modularity:** Objects are self-contained, making code easier to troubleshoot.
-  - **Reusability:** Inheritance and polymorphism allow code to be reused and extended (promoting the [DRY principle](/my-learning-curve/blog/10-dry-principle)).
+  - **Reusability:** Inheritance and polymorphism allow code to be reused and extended (promoting the [DRY principle](/learning-curve/blog/10-dry-principle)).
   - **Real-world Modeling:** easy to map real-world entities (Car, User, Account) to code.
 - **Cons:**
   - **Complexity:** Can lead to overly complex hierarchies ("banana-gorilla-jungle" problem: you wanted a banana but got a gorilla holding the banana and the entire jungle).
   - **Performance:** All that abstraction can introduce overhead.
-- **Critics:** Often criticized for encouraging mutable state (which leads to bugs) and for creating rigid class structures that are hard to refactor. Adhering to [SOLID principles](/my-learning-curve/blog/11-solid-principles) and using appropriate [design patterns](/my-learning-curve/blog/20-design-patterns) is often cited.
+- **Critics:** Often criticized for encouraging mutable state (which leads to bugs) and for creating rigid class structures that are hard to refactor. Adhering to [SOLID principles](/learning-curve/blog/11-solid-principles) and using appropriate [design patterns](/learning-curve/blog/20-design-patterns) is often cited.
 
 ### Functional Programming (FP)
 

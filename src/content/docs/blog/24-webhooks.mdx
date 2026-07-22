@@ -3,7 +3,7 @@ title: Understanding Webhooks
 excerpt: Learn what webhooks are, how they power real-time web applications, and best practices for implementing them.
 tags: ['Webhooks', 'Architecture', 'API', 'Backend']
 date: 2026-05-05
-lastUpdated: 2026-05-05
+lastUpdated: 2026-07-22
 ---
 
 import { Aside } from '@astrojs/starlight/components'
@@ -73,7 +73,7 @@ This is the application where the event actually occurs (e.g., a service like Gi
 const webhookUrl = 'http://localhost:3000/api/webhooks/github'
 
 const eventPayload = {
-  repository: { name: 'my-learning-curve' },
+  repository: { name: 'learning-curve' },
   pusher: { name: 'edouard' },
 }
 

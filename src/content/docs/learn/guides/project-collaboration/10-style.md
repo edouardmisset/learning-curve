@@ -4,10 +4,10 @@ title: 'Styles (CSS)'
 description: 'Guidelines and tools for managing CSS styles in the project.'
 tags: [css, stylelint, guidelines]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/09-testing
+  link: /learning-curve/learn/guides/project-collaboration/09-testing
   label: Testing
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/11-writing-guidelines
+  link: /learning-curve/learn/guides/project-collaboration/11-writing-guidelines
   label: Writing Guidelines
 ---
 

@@ -4,10 +4,10 @@ title: 'Git Workflow'
 description: 'Overview of branching strategies and workflows for Git.'
 tags: [git, workflow, branching]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/06-merge-request-recommendations
+  link: /learning-curve/learn/guides/project-collaboration/06-merge-request-recommendations
   label: Merge Request Recommendations
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/08-tech-stack
+  link: /learning-curve/learn/guides/project-collaboration/08-tech-stack
   label: Tech Stack
 ---
 
@@ -41,7 +41,7 @@ git add --all
 ```
 
 - Commit them `git commit --message "fix: fix the slider"` (please follow
-  the [conventional commit](/my-learning-curve/learn/guides/project-collaboration/05-conventional-commits) convention when writing
+  the [conventional commit](/learning-curve/learn/guides/project-collaboration/05-conventional-commits) convention when writing
   your commit message)
 - Go to github / gitlab's interface and merge from there.
   - **Feature / bug**: everything is already in place

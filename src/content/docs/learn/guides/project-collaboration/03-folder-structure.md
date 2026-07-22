@@ -4,10 +4,10 @@ title: 'Folder Structure'
 description: 'Overview of the recommended folder structure for components and pages.'
 tags: [folder, structure, organization]
 prev:
-  link: /my-learning-curve/learn/guides/project-collaboration/02-naming-conventions
+  link: /learning-curve/learn/guides/project-collaboration/02-naming-conventions
   label: Naming Conventions
 next:
-  link: /my-learning-curve/learn/guides/project-collaboration/04-component-structure
+  link: /learning-curve/learn/guides/project-collaboration/04-component-structure
   label: Component Structure
 ---
 

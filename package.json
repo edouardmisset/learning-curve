@@ -1,5 +1,5 @@
 {
-  "name": "astro",
+  "name": "learning-curve",
   "version": "0.2.0",
   "type": "module",
   "scripts": {
@@ -34,6 +34,7 @@
     "astro-robots": "^2.3.1",
     "canvaskit-wasm": "^0.41.1",
     "mermaid": "^11.16.0",
+    "sharp": "0.35.3",
     "starlight-blog": "^0.28.0",
     "starlight-kbd": "^0.4.0",
     "starlight-links-validator": "^0.25.2",

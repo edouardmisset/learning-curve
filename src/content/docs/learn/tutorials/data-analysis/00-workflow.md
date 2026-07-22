@@ -5,33 +5,33 @@ description: 'A guide to the workflow for data analysis.'
 tags: ['data-analysis', 'workflow', 'guide']
 prev: false
 next:
-  link: /my-learning-curve/learn/tutorials/data-analysis/01-definition
+  link: /learning-curve/learn/tutorials/data-analysis/01-definition
   label: Define Your Question
 ---
 
 ## Workflow
 
-## 1. [Define Your Question](/my-learning-curve/learn/tutorials/data-analysis/01-definition)
+## 1. [Define Your Question](/learning-curve/learn/tutorials/data-analysis/01-definition)
 
 Before you start the analysis, you should know what you're looking for. This could be a specific question or a general idea of what you want to know.
 
-## 2. [Gather Your Data](/my-learning-curve/learn/tutorials/data-analysis/02-data-gathering)
+## 2. [Gather Your Data](/learning-curve/learn/tutorials/data-analysis/02-data-gathering)
 
 This could be collecting your own data or finding an existing dataset that fits your needs.
 
-## 3. [Clean Your Data](/my-learning-curve/learn/tutorials/data-analysis/03-data-cleaning)
+## 3. [Clean Your Data](/learning-curve/learn/tutorials/data-analysis/03-data-cleaning)
 
 This involves handling missing or inconsistent data and may involve removing outliers.
 
-## 4. [Explore Your Data](/my-learning-curve/learn/tutorials/data-analysis/04-explore-data)
+## 4. [Explore Your Data](/learning-curve/learn/tutorials/data-analysis/04-explore-data)
 
 This involves using statistical techniques to learn about the relationships between variables.
 
-## 5. [Analyze Your Data](/my-learning-curve/learn/tutorials/data-analysis/05-analyze-data)
+## 5. [Analyze Your Data](/learning-curve/learn/tutorials/data-analysis/05-analyze-data)
 
 Apply statistical or machine learning methods to answer your question.
 
-## 6. [Interpret Your Results](/my-learning-curve/learn/tutorials/data-analysis/06-interpretation)
+## 6. [Interpret Your Results](/learning-curve/learn/tutorials/data-analysis/06-interpretation)
 
 Make sure you understand what your analysis is telling you. This could involve statistical tests for significance, or it could be as simple as comparing the means of two groups.
 

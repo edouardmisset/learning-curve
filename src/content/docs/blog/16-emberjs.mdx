@@ -3,7 +3,7 @@ date: 2025-12-22
 title: Ember.js for React Developers
 excerpt: A guide to switching mental models from React to Ember.js, highlighting differences and gotchas.
 tags: ['Ember.js', 'React', 'TypeScript', 'Frameworks', 'Comparison']
-lastUpdated: 2026-03-24
+lastUpdated: 2026-07-22
 ---
 
 import Disclaimer from '~/components/Disclaimer.astro'
@@ -30,9 +30,9 @@ Ember includes all of these out of the box:
 
 ### 2. Functional vs. Object-Oriented
 
-Modern React is heavily functional (Hooks, Functional Components). On the other hand, Ember has embraced modern JavaScript **classes** and **[Decorators](/my-learning-curve/blog/15-oop#decorators)**. Decorators (like `@tracked`, `@action`, `@service`) are just functions that wrap classes or properties to add behavior. This is somewhat similar to Higher-Order Components in older React.
+Modern React is heavily functional (Hooks, Functional Components). On the other hand, Ember has embraced modern JavaScript **classes** and **[Decorators](/learning-curve/blog/15-oop#decorators)**. Decorators (like `@tracked`, `@action`, `@service`) are just functions that wrap classes or properties to add behavior. This is somewhat similar to Higher-Order Components in older React.
 
-> See the article on [Object-Oriented Programming](/my-learning-curve/blog/15-oop) for a refresher on classes and inheritance, which are fundamental to Ember's architecture.
+> See the article on [Object-Oriented Programming](/learning-curve/blog/15-oop) for a refresher on classes and inheritance, which are fundamental to Ember's architecture.
 
 ### 3. Reactivity: Virtual DOM vs. Tracked Properties
 
@@ -40,7 +40,7 @@ React uses the Virtual DOM and re-renders components when state changes (`useSta
 
 Ember uses **Tracked Properties** (Glimmer VM). We annotate a class property with `@tracked`, and when it changes, only the parts of the DOM that depend on it update. It's more akin to "fine-grained reactivity" (like Signals) than VDOM diffing.
 
-> See [Memoization](/my-learning-curve/blog/04-memoization) for how React handles derived state.
+> See [Memoization](/learning-curve/blog/04-memoization) for how React handles derived state.
 > In Ember, we simply use a standard JavaScript `get` accessor, and it
 > auto-tracks dependencies!
 

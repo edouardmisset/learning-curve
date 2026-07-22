@@ -3,7 +3,7 @@ title: 'Idempotency: Making Retries Safe'
 excerpt: Learn how idempotency prevents retries from charging, sending, or processing twice.
 tags: ['Idempotency', 'HTTP', 'Distributed Systems', 'APIs', 'TypeScript']
 date: 2026-07-05
-lastUpdated: 2026-07-16
+lastUpdated: 2026-07-22
 draft: true
 ---
 
@@ -66,10 +66,10 @@ trim(trim('  hello  ')) === trim('  hello  ') // true
 increment(increment(1)) === increment(1) // false
 ```
 
-This connects naturally to [functional programming](/my-learning-curve/blog/17-programming-paradigms#functional-programming-fp):
+This connects naturally to [functional programming](/learning-curve/blog/17-programming-paradigms#functional-programming-fp):
 pure functions make effects easier to reason about because their output depends
 only on their input. Composing transformations with
-[higher-order functions](/my-learning-curve/blog/05-higher-order-functions) can
+[higher-order functions](/learning-curve/blog/05-higher-order-functions) can
 keep calculations pure. However, **purity and idempotency are different
 properties**. `increment` is pure but not idempotent. A function that writes the
 same database value each time may be idempotent in effect, but is not pure
@@ -246,7 +246,7 @@ Instead, model the operation as a state machine and investigate stale
 `processing` records. Move one to `retryable` only after proving no external
 effect began; otherwise move it to `reconciling`. For stronger workflows, commit
 the business change and an **outbox** message in one
-[ACID transaction](/my-learning-curve/blog/13-acid), then let a worker deliver
+[ACID transaction](/learning-curve/blog/13-acid), then let a worker deliver
 the side effect. Give the downstream provider the same stable key when its API
 supports one. “Exactly once” is rarely a transport guarantee; it is usually the
 observed result of durable identities plus deduplication at every effect
@@ -285,7 +285,7 @@ new operation, so retaining a durable business identifier—such as a unique
 
 ## Webhooks: idempotency from the receiving side
 
-As the [Webhooks article](/my-learning-curve/blog/24-webhooks) explains, event
+As the [Webhooks article](/learning-curve/blog/24-webhooks) explains, event
 delivery crosses the same unreliable network. A sender may retry after your
 handler committed its work but lost the acknowledgement. Stripe therefore
 advises receivers to log processed event IDs and skip duplicates in its
