@@ -9,6 +9,7 @@ import { CATPPUCCIN_OPTIONS } from './plugins/catppuccin-options.ts'
 import { STARLIGHT_BLOG_OPTIONS } from './plugins/starlight-blog-options.ts'
 import { STARLIGHT_KBD_OPTIONS } from './plugins/starlight-kbd-options.ts'
 import { STARLIGHT_LLM_TXT_OPTIONS } from './plugins/starlight-llms-txt-options.ts'
+import { routeDataPlugin } from './plugins/route-data-plugin.ts'
 
 type SidebarItem = NonNullable<
   Parameters<typeof starlight>[0]['sidebar']
@@ -80,12 +81,12 @@ export const STARLIGHT_OPTIONS = {
     starlightLinksValidator(),
     starlightLlmsTxt(STARLIGHT_LLM_TXT_OPTIONS),
     starlightBlog(STARLIGHT_BLOG_OPTIONS),
+    routeDataPlugin(),
   ],
   customCss: [
     '@fontsource-variable/atkinson-hyperlegible-next/index.css',
     './src/styles/custom.css',
   ],
-  routeMiddleware: './src/route-data.ts',
   editLink: {
     baseUrl: `${REPO_URL}/edit/main/`,
   },
