@@ -3,7 +3,7 @@ title: 'The AI Stack for Developers: Terms, Tools, and Trade-Offs'
 excerpt: "A developer's guide to AI terms, tooling, infrastructure, and the trade-offs behind the hype."
 tags: ['AI', 'LLM', 'Developer Tooling', 'Infrastructure', 'Machine Learning']
 date: 2026-05-11
-lastUpdated: 2026-06-28
+lastUpdated: 2026-07-30
 draft: true
 ---
 
@@ -323,8 +323,9 @@ on a task or domain. **RLHF**, ([Reinforcement learning from human feedback](htt
 other **preference tuning** methods push the model toward outputs humans judge
 more helpful, harmless, or aligned with product goals. The industry often treats
 these terms interchangeably when it should not. SFT teaches by example; RLHF or
-RLAIF ranks and refines behavior with preference signals; product prompting
-still does a great deal of the everyday steering.
+**RLAIF** (Reinforcement learning from AI feedback) ranks and refines behavior
+with preference signals; product prompting still does a great deal of the
+everyday steering.
 
 **Distillation** ([Knowledge distillation](https://en.wikipedia.org/wiki/Knowledge_distillation)) is the process of training a smaller model to imitate a stronger
 one or a stronger system. It is one reason smaller models keep getting
@@ -375,7 +376,7 @@ API or platform. Some of that is **first-party inference**, where the lab that
 builds the model also serves it. Some is third-party hosting, where another
 platform exposes the model or a compatible interface. OpenAI, Anthropic,
 Google DeepMind, xAI, and Mistral all operate first-party inference surfaces.
-AWS Bedrock, Vertex AI, Azure AI Foundry, and similar platforms also expose models
+AWS Bedrock, Vertex AI, Microsoft Foundry, and similar platforms also expose models
 through broader cloud offerings. For developers, the distinction matters because
 it affects features, latency, price, quotas, compliance, and how quickly new
 models appear.
@@ -618,7 +619,7 @@ future has already arrived.
 
 - [OpenAI Developers, "Working with evals"](https://developers.openai.com/api/docs/guides/evals) [deprecated]
 - [OpenAI Developers, "Structured model outputs"](https://developers.openai.com/api/docs/guides/structured-outputs)
-- [Anthropic Docs, "Reduce prompt leak"](https://platform.claude.com/docs/en/docs/test-and-evaluate/strengthen-guardrails/reduce-prompt-leak)
+- [Anthropic Docs, "Reduce prompt leak"](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-prompt-leak)
 
 ### Benchmarks and Tracking
 

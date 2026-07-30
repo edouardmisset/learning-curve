@@ -3,7 +3,7 @@ title: 'Idempotency: Making Retries Safe'
 excerpt: Learn how idempotency prevents retries from charging, sending, or processing twice.
 tags: ['Idempotency', 'HTTP', 'Distributed Systems', 'APIs', 'TypeScript']
 date: 2026-07-05
-lastUpdated: 2026-07-22
+lastUpdated: 2026-07-30
 draft: true
 ---
 
@@ -214,8 +214,15 @@ if (!ownsClaim) {
   }
 }
 
+type PaymentOutcome = {
+  kind: 'success' | 'business-rejection' | 'retryable-before-effect'
+  status: number
+  body: unknown
+  response: Response
+}
+
 try {
-  const outcome = await createPayment(input)
+  const outcome: PaymentOutcome = await attemptCharge(input)
 
   if (outcome.kind === 'retryable-before-effect') {
     await records.markRetryable(accountId, key)
