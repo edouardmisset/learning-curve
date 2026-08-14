@@ -30,6 +30,9 @@ export default defineConfig({
           include: ['blog/**/*.{md,mdx}'],
         },
       ],
+      // NOTE: Using the fixture (keyword-based) embedding provider for this PoC.
+      // Replace with the default transformers.js provider (or another real provider)
+      // for semantically meaningful related-content rankings in production.
       embeddings: {
         provider: createFixtureEmbeddingProvider(),
       },
