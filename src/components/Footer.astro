@@ -1,0 +1,10 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro'
+import RelatedBlogPosts from '~/components/RelatedBlogPosts.astro'
+
+const entryId = Astro.locals.starlightRoute?.entry.id ?? ''
+const isBlogPost = entryId.startsWith('blog/') && entryId !== 'blog/index'
+---
+
+{isBlogPost && <RelatedBlogPosts entryId={entryId} />}
+<Default {...Astro.props}><slot /></Default>

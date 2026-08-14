@@ -1,0 +1,81 @@
+---
+import { getRelatedContent } from 'virtual:astro-related-content'
+import { BASE_PATH } from '~/constants/links'
+
+interface Props {
+  entryId: string
+}
+
+const { entryId } = Astro.props
+
+const MAX_RELATED_POSTS = 2
+
+const relatedResults = await getRelatedContent('docs', entryId)
+const relatedPosts = relatedResults.slice(0, MAX_RELATED_POSTS)
+---
+
+{
+  relatedPosts.length > 0 && (
+    <section class="related-posts">
+      <h2>Related Posts</h2>
+      <ul>
+        {relatedPosts.map(({ entry }) => {
+          const slug = entry.id.replace(/\.(md|mdx)$/, '')
+          const href = `${BASE_PATH}/blog/${slug.replace(/^blog\//, '')}/`
+          return (
+            <li>
+              <a href={href}>{entry.data.title}</a>
+              {entry.data.excerpt && <p>{entry.data.excerpt}</p>}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+<style>
+  @layer starlight.components {
+    .related-posts {
+      border-block-start: 1px solid var(--sl-color-gray-5);
+      margin-block-start: 2rem;
+      padding-block-start: 1.5rem;
+    }
+
+    .related-posts h2 {
+      font-size: var(--sl-text-lg);
+      font-weight: 600;
+      margin-block-end: 1rem;
+    }
+
+    .related-posts ul {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .related-posts li {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .related-posts a {
+      color: var(--sl-color-text-accent);
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .related-posts a:hover {
+      text-decoration: underline;
+    }
+
+    .related-posts p {
+      color: var(--sl-color-gray-3);
+      font-size: var(--sl-text-sm);
+      margin: 0;
+    }
+  }
+</style>

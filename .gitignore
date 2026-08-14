@@ -24,3 +24,6 @@ pnpm-debug.log*
 .cache/
 .fallow/
 .stylelintcache
+
+# astro-related-content artifacts
+.astro-related-content/

@@ -1,5 +1,7 @@
 import sitemap from '@astrojs/sitemap'
 import starlight from '@astrojs/starlight'
+import astroRelatedContent from '@philnash/astro-related-content'
+import { createFixtureEmbeddingProvider } from '@philnash/astro-related-content/testing'
 import robots from 'astro-robots'
 import { defineConfig } from 'astro/config'
 import { BASE_PATH, BASE_WEBSITE_URL } from './src/constants/links.ts'
@@ -21,6 +23,20 @@ export default defineConfig({
     },
   },
   integrations: [
+    astroRelatedContent({
+      collections: [
+        {
+          collection: 'docs',
+          include: ['blog/**/*.{md,mdx}'],
+        },
+      ],
+      embeddings: {
+        provider: createFixtureEmbeddingProvider(),
+      },
+      generation: {
+        limit: 2,
+      },
+    }),
     mermaid({
       autoTheme: true,
     }),
