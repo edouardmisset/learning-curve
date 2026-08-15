@@ -21,7 +21,7 @@ const relatedPosts = relatedResults.slice(0, MAX_RELATED_POSTS)
       <ul>
         {relatedPosts.map(({ entry }) => {
           const slug = entry.id.replace(/\.(md|mdx)$/, '')
-          const href = `${BASE_PATH}/blog/${slug.replace(/^blog\//, '')}/`
+          const href = `${BASE_PATH}/${slug}/`
           return (
             <li>
               <a href={href}>{entry.data.title}</a>
