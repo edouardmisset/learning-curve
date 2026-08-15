@@ -40,7 +40,7 @@ A bundler follows `import` graphs and combines modules into deployable files (of
 
 ### Transpiler
 
-A transpiler converts source code to another source form at similar abstraction level (for example TS/JSX -> JS).
+A transpiler converts source code to another source form at a similar abstraction level (for example TS/JSX -> JS).
 
 ### Minifier
 
@@ -210,7 +210,7 @@ What happened: prefixed declarations added for targeted engines.
 
 ## Side Note: Formatter vs Linter (Not Build Steps)
 
-- **Formatters** (Prettier, Biome formatter, `oxformat`, Deno fmt): enforce code style.
+- **Formatters** (Prettier, Biome formatter, OXC formatter, Deno fmt): enforce code style.
 - **Linters** (ESLint, Biome linter, Oxlint, Deno lint): catch suspicious patterns and quality issues.
 
 They usually run in dev/CI, not as required runtime transforms for shipped bundles.
