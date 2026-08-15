@@ -1,5 +1,7 @@
 import sitemap from '@astrojs/sitemap'
 import starlight from '@astrojs/starlight'
+import astroRelatedContent from '@philnash/astro-related-content'
+import { createFixtureEmbeddingProvider } from '@philnash/astro-related-content/testing'
 import robots from 'astro-robots'
 import { defineConfig } from 'astro/config'
 import { BASE_PATH, BASE_WEBSITE_URL } from './src/constants/links.ts'
@@ -21,6 +23,23 @@ export default defineConfig({
     },
   },
   integrations: [
+    astroRelatedContent({
+      collections: [
+        {
+          collection: 'docs',
+          include: ['blog/**/*.{md,mdx}'],
+        },
+      ],
+      // NOTE: Using the fixture (keyword-based) embedding provider for this PoC.
+      // Replace with the default transformers.js provider (or another real provider)
+      // for semantically meaningful related-content rankings in production.
+      embeddings: {
+        provider: createFixtureEmbeddingProvider(),
+      },
+      generation: {
+        limit: 2,
+      },
+    }),
     mermaid({
       autoTheme: true,
     }),

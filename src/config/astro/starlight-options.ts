@@ -142,4 +142,7 @@ export const STARLIGHT_OPTIONS = {
     autogenerateGroup('Snippets', 'snippets', { collapsed: true }),
   ],
   lastUpdated: true,
+  components: {
+    Footer: './src/components/Footer.astro',
+  },
 } as const satisfies Parameters<typeof starlight>[0]
