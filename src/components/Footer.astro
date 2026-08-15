@@ -3,7 +3,10 @@ import Default from '@astrojs/starlight/components/Footer.astro'
 import RelatedBlogPosts from '~/components/RelatedBlogPosts.astro'
 
 const entryId = Astro.locals.starlightRoute?.entry.id ?? ''
-const isBlogPost = entryId.startsWith('blog/') && entryId !== 'blog/index'
+const isBlogPost =
+  entryId.startsWith('blog/') &&
+  entryId !== 'blog/index' &&
+  !entryId.startsWith('blog/tags/')
 ---
 
 {isBlogPost && <RelatedBlogPosts entryId={entryId} />}
