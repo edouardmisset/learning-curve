@@ -134,6 +134,10 @@ export const STARLIGHT_OPTIONS = {
     {
       label: 'Reference',
       items: [
+        {
+          label: 'Knowledge Map',
+          link: PATHS.reference('knowledge-map'),
+        },
         autogenerateGroup('Cheatsheets', 'reference/cheatsheets'),
         autogenerateGroup('Templates', 'reference/templates'),
         autogenerateGroup('Tools', 'reference/tools'),

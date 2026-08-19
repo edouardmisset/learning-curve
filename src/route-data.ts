@@ -16,6 +16,9 @@ type DiscoveryFrontmatter = {
   excerpt?: string
 }
 
+type SidebarEntry = StarlightRouteData['sidebar'][number]
+type SidebarGroup = Extract<SidebarEntry, { type: 'group' }>
+
 export const onRequest = defineRouteMiddleware(context => {
   const route = context.locals.starlightRoute
 
@@ -24,15 +27,22 @@ export const onRequest = defineRouteMiddleware(context => {
 })
 
 function collapseBlogTags(sidebar: StarlightRouteData['sidebar']): void {
-  const tagsSidebarGroup = sidebar.find(
-    item =>
-      item.type === 'group' &&
-      item.entries.some(
-        entry => entry.type === 'link' && entry.href.includes('/blog/tags/'),
-      ),
-  )
+  const tagsSidebarGroup = sidebar.find(isSidebarGroupWithBlogTags)
 
   if (tagsSidebarGroup) tagsSidebarGroup.collapsed = true
+}
+
+function isSidebarGroup(entry: SidebarEntry): entry is SidebarGroup {
+  return entry.type === 'group'
+}
+
+function isSidebarGroupWithBlogTags(entry: SidebarEntry): entry is SidebarGroup {
+  return (
+    isSidebarGroup(entry) &&
+    entry.entries.some(
+      item => item.type === 'link' && item.href.includes('/blog/tags/'),
+    )
+  )
 }
 
 function updateDiscoveryHead(
